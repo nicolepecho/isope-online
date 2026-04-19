@@ -1,0 +1,500 @@
+'use client';
+import { useEffect, useState, FC } from 'react';
+import { BellIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { supabase } from '@/app/lib/database';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation"; 
+import { Orgs } from '@/app/lib/definitions';
+import { fetchAccessibleOrgs } from '@/app/lib/access-control';
+
+const ORG_SLICE_LIMIT = 3;
+
+const OrgCard: FC<{ org: any }> = ({ org }) => {
+  const router = useRouter();
+
+  // Use real progress from org object
+  const progress = org.progress ?? 0;
+
+  // Navigate to org dashboard
+  const goToOrg = () => router.push(`./dashboard/orgs/${org.username}`);
+
+  // Navigate to dues tab
+  const goToDues = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/dashboard/orgs/${org.username}?tab=Requirements`);
+  };
+
+  return (
+    <div
+      onClick={goToOrg}
+      className="group flex flex-col bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 h-full cursor-pointer"
+    >
+      {/* Avatar + Name */}
+      <div className="flex flex-col items-center text-center mt-6 flex-grow">
+        <div className="w-20 h-20 rounded-full border-2 border-gray-300 mb-4 overflow-hidden bg-white">
+          {org.avatar ? (
+            <img
+              src={org.avatar}
+              alt={org.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-3xl">
+              {org.name[0]}
+            </div>
+          )}
+        </div>
+
+        <h2 className="text-xl font-bold text-gray-900 mb-4 group-hover:underline line-clamp-2">
+          {org.name}
+        </h2>
+
+        {org.active === false && (
+          <span className="mt-1 inline-block text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+            Archived
+          </span>
+        )}
+
+
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mt-4">
+        <div className="text-xs font-semibold text-[#014fb3] mb-1 text-center">
+          {progress}%
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div
+            className="bg-[#014fb3] h-full rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-5 pt-3 grid grid-cols-[1fr_auto] gap-2">
+        {/* Requirements */}
+        <button
+          onClick={goToDues}
+          className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer"
+        >
+          <DocumentIcon className="w-5 h-5" />
+          <span>Requirements</span>
+        </button>
+
+        {/* Notifications */}
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-center bg-[#014fb3] hover:bg-[#013db3] text-white p-2 rounded-md transition cursor-pointer"
+        >
+          <BellIcon className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+// Create Organization Modal
+const CreateOrgModal: FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (name: string, email: string) => Promise<void>;
+}> = ({ isOpen, onClose, onCreate }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleCreate = async () => {
+    if (name.trim() && email.trim()) {
+      await onCreate(name, email);
+      setName('');
+      setEmail('');
+    }
+  };
+  
+
+  return (
+    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-black">Create Organization</h2>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Organization Name */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Organization Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter organization name"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#014fb3] outline-none text-black"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            />
+          </div>
+
+          {/* Organization Email */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Organization Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email address"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#014fb3] outline-none text-black"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-black px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreate}
+            className="cursor-pointer text-white px-4 py-2 bg-[#014fb3] hover:bg-[#013db3] rounded-md transition"
+          >
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Dashboard
+const OrgsDashboard: FC = () => {
+  const { data: session, status } = useSession();
+
+  const [allOrgs, setAllOrgs] = useState<any[]>([]);
+  const [orgs, setOrgs] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const [hasMoreOrgs, setHasMoreOrgs] = useState(false);
+
+  const [role, setRole] = useState<string>('');
+
+
+  const [stats, setStats] = useState({
+  activeOrgs: 0,
+  totalOrgs: 0,
+  graded: 0,
+  approved: 0,
+  activeRequirements: 0,
+});
+
+
+  const filteredOrgs = allOrgs
+    .filter((org) =>
+      org.active === true &&
+      (
+        !search.trim() ||
+        org.name.toLowerCase().includes(search.toLowerCase()) ||
+        org.username.toLowerCase().includes(search.toLowerCase())
+      )
+    )
+    .slice(0, ORG_SLICE_LIMIT);
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      if (status === 'loading') return;
+      try {
+        const role = (((session?.user as any)?.role) || '').toString().toLowerCase();
+        setRole(role);
+        const name = (session?.user as any)?.name;
+        const email = ((session?.user as any)?.email || '').toString().trim().toLowerCase();
+        const orgIdentifier =
+          role === 'org'
+            ? session?.user?.email
+            : (session?.user as any)?.username || session?.user?.name;
+
+
+        const fetchedOrgs: Orgs[] = await fetchAccessibleOrgs({
+          role,
+          name,
+          orgIdentifier,
+          email
+        });
+
+        // check if there are more orgs than the slice limit
+        setHasMoreOrgs(fetchedOrgs.length > ORG_SLICE_LIMIT);
+
+        // create sliced version (do NOT reassign)
+        if (fetchedOrgs.length === 0) {
+          setAllOrgs([]);
+          setOrgs([]);
+          return;
+        }
+
+        // store ALL orgs
+        setAllOrgs(fetchedOrgs);
+
+        // Fetch requirement status for ALL orgs
+        const usernames = fetchedOrgs.map((o) => o.username);
+
+        const { data: reqStatus } = await supabase
+          .from('org_requirement_status')
+          .select('orgUsername, submitted')
+          .in('orgUsername', usernames)
+          .eq('active', true);
+
+        const orgsWithProgress = fetchedOrgs.map((org) => {
+          const rows = reqStatus?.filter((r) => r.orgUsername === org.username) || [];
+          const total = rows.length;
+          const submitted = rows.filter((r) => r.submitted).length;
+          const progress = total === 0 ? 0 : Math.round((submitted / total) * 100);
+          return { ...org, progress };
+        });
+
+        // Store FULL list
+        setAllOrgs(orgsWithProgress);
+
+        // Slice only for display
+        setOrgs(orgsWithProgress.slice(0, ORG_SLICE_LIMIT));
+
+      } catch (err: any) {
+        console.error('Error fetching orgs:', err?.message ?? err);
+        setOrgs([]);
+      } finally {
+        setLoading(false);
+      }
+      
+      // ===============================
+      // Fetch ORG statistics
+      // ===============================
+
+      // ORGS TABLE STATS
+      const { data: orgStats } = await supabase
+        .from('orgs')
+        .select('active');
+
+      const totalOrgs = orgStats?.length || 0;
+      const activeOrgs = orgStats?.filter(o => o.active === true).length || 0;
+
+
+      // REQUIREMENT STATUS STATS
+      const { data: reqStats } = await supabase
+        .from('org_requirement_status')
+        .select('active, graded, approved')
+        .eq('active', true);
+
+      const activeRequirements = reqStats?.length || 0;
+      const graded = reqStats?.filter(r => r.graded === true).length || 0;
+      const approved = reqStats?.filter(r => r.approved === true).length || 0;
+
+
+      // Store stats
+      setStats({
+        activeOrgs,
+        totalOrgs,
+        graded,
+        approved,
+        activeRequirements,
+      });
+
+    };
+
+    fetchOrgs();
+  }, [status, session]);
+
+  
+
+  const handleCreateOrg = async (name: string, email: string) => {
+    if (!name.trim() || !email.trim()) {
+      alert(
+        'Failed to create organization. Organization not made due to existing or invalid input.'
+      );
+      return;
+    }
+
+    const username = name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    const { data: existingOrg } = await supabase
+      .from('orgs')
+      .select('username')
+      .or(`email.eq.${email},username.eq.${username}`)
+      .maybeSingle();
+
+    if (existingOrg) {
+      alert(
+        'Failed to create organization. Organization not made due to existing or invalid input.'
+      );
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('orgs')
+      .insert([
+        {
+          username,
+          name,
+          email,
+          bio: null,
+          adviser: null,
+          accreditlvl: null,
+          avatar: null,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      alert(
+        'Failed to create organization. Organization not made due to existing or invalid input.'
+      );
+      console.error('Error creating org:', error);
+      return;
+    }
+
+    setOrgs((prev) => [...prev, data]);
+    setShowModal(false);
+  };
+
+  if (loading) return <div className="p-4 text-black">Loading organizations...</div>;
+  
+  return (
+    <div className=" min-h-screen p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-black">DASHBOARD</h1>
+          <p className="text-black">Hello, {session?.user?.name}</p>
+        </div>
+      
+        <div className="flex items-center gap-3 ml-auto">
+          <input
+            type="text"
+            placeholder="Search organization"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0
+                       bg-white px-4 py-2 rounded-md border border-gray-300 text-black
+                       focus:bg-white focus:ring-2 focus:ring-[#014fb3] outline-none"
+          />
+
+          {role === 'osas' && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="cursor-pointer flex-shrink-0 bg-[#014fb3] hover:bg-[#013db3] text-white
+                         px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Create Organization
+            </button>
+          )}
+        </div>
+      </div>
+
+        {/* ================= Conditional Section ================= */}
+        {role === 'osas' ? (
+          /* ================= Statistics Section ================= */
+          <div className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+              {/* Active Orgs */}
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">
+                  Active Organizations
+                </h3>
+                <p className="text-3xl font-bold text-[#014fb3]">
+                  {stats.activeOrgs}
+                  <span className="text-gray-400 text-lg font-medium">
+                    {" "} / {stats.totalOrgs}
+                  </span>
+                </p>
+              </div>
+
+              {/* Graded Requirements */}
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">
+                  Graded Requirements
+                </h3>
+                <p className="text-3xl font-bold text-[#014fb3]">
+                  {stats.graded}
+                  <span className="text-gray-400 text-lg font-medium">
+                    {" "} / {stats.activeRequirements}
+                  </span>
+                </p>
+              </div>
+
+              {/* Approved Requirements */}
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">
+                  Approved Requirements
+                </h3>
+                <p className="text-3xl font-bold text-[#014fb3]">
+                  {stats.approved}
+                  <span className="text-gray-400 text-lg font-medium">
+                    {" "} / {stats.activeRequirements}
+                  </span>
+                </p>
+              </div>
+
+            </div>
+          </div>
+        ) : (
+          /* ================= Banner Section ================= */
+          <div className="mb-8 bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 className="text-4xl font-bold text-[#014fb3] mb-2">
+              Empowering Student Organizations
+            </h2>
+            {/*<p className="text-gray-600">
+              Manage requirements, track progress, and stay connected with OSAS.
+            </p>*/}
+          </div>
+        )}
+
+      {filteredOrgs.length === 0 ? (
+        <p className="text-black">No active organizations found.</p>
+      ) : (
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredOrgs.map((org) => (
+              <OrgCard key={org.username} org={org} />
+            ))}
+          </div>
+
+          {hasMoreOrgs && (
+            <a
+              href="/navorgs"
+              className="bg-[#014fb3] hover:bg-[#013db3] text-white px-6 py-2 rounded-md font-medium transition"
+            >
+              See More
+            </a>
+          )}
+        </div>
+      )}
+
+
+      <CreateOrgModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onCreate={handleCreateOrg}
+      />
+    </div>
+  );
+};
+
+export default OrgsDashboard;

@@ -1,0 +1,11 @@
+?column?
+"CREATE TABLE evaluation_template_questions (id uuid NOT NULL, templateId uuid NOT NULL, type text NOT NULL, text text NOT NULL, options jsonb, scale integer, sort_order integer NOT NULL, active boolean NOT NULL, created_at timestamp with time zone NOT NULL);"
+"CREATE TABLE evaluation_templates (id uuid NOT NULL, title text NOT NULL, instructions text NOT NULL, active boolean NOT NULL, created_at timestamp with time zone NOT NULL);"
+"CREATE TABLE member (id bigint NOT NULL, student_name text NOT NULL, organizations text NOT NULL, school_year text);"
+"CREATE TABLE org_evaluation_responses (id uuid NOT NULL, orgEvaluationId uuid NOT NULL, orgUsername text NOT NULL, memberId integer NOT NULL, respondentEmail text, answers jsonb NOT NULL, submitted boolean NOT NULL, created_at timestamp with time zone NOT NULL, updated_at timestamp with time zone NOT NULL);"
+"CREATE TABLE org_evaluations (id uuid NOT NULL, orgUsername text NOT NULL, templateId uuid NOT NULL, school_year integer, active boolean NOT NULL, archived boolean NOT NULL, created_at timestamp with time zone NOT NULL, archived_at timestamp with time zone);"
+"CREATE TABLE org_requirement_status (orgUsername text, requirementId text, submitted boolean, graded boolean, score bigint, start date, due date, grade bigint, year bigint, active boolean NOT NULL, freeformans text, id text NOT NULL, approved boolean);"
+"CREATE TABLE orgs (username text NOT NULL, name text, bio text, adviser text, accreditlvl bigint, avatar text, email text, adviseremail text, active boolean);"
+"CREATE TABLE requirementcomments (id uuid NOT NULL, orgUsername text NOT NULL, requirementId text, authorRole text, content text, createdAt timestamp without time zone, authorEmail text, authorName text, deleted boolean);"
+"CREATE TABLE requirements (id text NOT NULL, section text NOT NULL, title text, active boolean, instructions text, submissiontype text);"
+"CREATE TABLE users (id bigint NOT NULL, Email text NOT NULL, Name text NOT NULL, Orgs text, Role text, LastLogged timestamp without time zone, Username text, PasswordHash text, ResetToken text, ResetExpires text);"
