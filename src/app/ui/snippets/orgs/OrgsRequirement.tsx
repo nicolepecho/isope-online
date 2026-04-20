@@ -189,8 +189,24 @@ export default function OrgsRequirement({
       duplicatedStatuses
     );
 
-    // 4. Deactivate old rows
-    console.log('[Archive][3] Deactivating old statuses…');
+    // 3. Move uploaded files into per-status subfolders before deactivating
+    console.log('[Archive][3] Moving files to archive subfolders…');
+
+    const statusesForArchive = currentStatuses.map((s: any) => ({
+      requirementId: s.requirementId,
+      statusId: s.id,
+    }));
+
+    await fetch('/api/requirements/archive-files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgname: username, statuses: statusesForArchive }),
+    });
+
+    console.log('[Archive][3] Files moved');
+
+    // 5. Deactivate old rows
+    console.log('[Archive][5] Deactivating old statuses…');
 
     const { error: updateError } = await supabase
       .from('org_requirement_status')
@@ -199,25 +215,25 @@ export default function OrgsRequirement({
       .eq('active', true);
 
     if (updateError) {
-      console.error('[Archive][3] Update error:', updateError);
+      console.error('[Archive][5] Update error:', updateError);
       throw updateError;
     }
 
-    console.log('[Archive][3] Old statuses deactivated');
+    console.log('[Archive][5] Old statuses deactivated');
 
-    // 3. Insert duplicated rows
-    console.log('[Archive][4] Inserting duplicated statuses…');
+    // 6. Insert new reset rows
+    console.log('[Archive][6] Inserting duplicated statuses…');
 
     const { error: insertError } = await supabase
       .from('org_requirement_status')
       .insert(duplicatedStatuses);
 
     if (insertError) {
-      console.error('[Archive][4] Insert error:', insertError);
+      console.error('[Archive][6] Insert error:', insertError);
       throw insertError;
     }
 
-    console.log('[Archive][4] Insert successful');
+    console.log('[Archive][6] Insert successful');
 
     
 
