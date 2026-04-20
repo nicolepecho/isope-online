@@ -194,7 +194,7 @@ export default function OrgsRequirement({
 
     const { error: updateError } = await supabase
       .from('org_requirement_status')
-      .update({ active: false })
+      .update({ active: false, year: currentYear })
       .eq('orgUsername', username)
       .eq('active', true);
 
