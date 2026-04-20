@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { formatName } from '@/app/lib/assessments';
 import { supabaseAdmin, supabase } from '@/app/lib/database';
 import { useSession } from "next-auth/react";
@@ -17,6 +18,8 @@ import { useRouter } from 'next/navigation';
 
 export default function RequirementPage({ params }: { params: Promise<{ orgname: string; reqid: string }> }) {
   const { orgname, reqid } = use(params);
+  const searchParams = useSearchParams();
+  const statusId = searchParams.get('statusId') ?? '';
   const { data: session, status } = useSession();
   const [approved, setApproved] = useState(false);
   const [initialApproved, setInitialApproved] = useState(false);
@@ -174,9 +177,7 @@ const loadRequirementFromSupabase = async () => {
       const { data, error: fetchError } = await supabase
         .from('org_requirement_status')
         .select('grade, score, freeformans')
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true)
+        .eq('id', statusId)
         .maybeSingle() as any;
 
       if (fetchError) {
@@ -207,26 +208,11 @@ const loadRequirementFromSupabase = async () => {
 
     try {
       setError(null);
-      const { data: existing } = await supabase
-        .from('org_requirement_status')
-        .select('id')
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true)
-        .maybeSingle();
-
       const payload = { grade: newScore, graded: true };
-      const { error: dbError } = existing
-        ? await supabase.from('org_requirement_status').update(payload).eq('id', existing.id)
-        : await supabase.from('org_requirement_status').insert({
-            ...payload,
-            orgUsername: orgname,
-            requirementId: reqid,
-            submitted: state.hasSubmitted,
-            score: state.maxScore,
-            start: new Date().toISOString().split('T')[0],
-            due: state.dueDate ? state.dueDate.toISOString().split('T')[0] : null
-          });
+      const { error: dbError } = await supabase
+        .from('org_requirement_status')
+        .update(payload)
+        .eq('id', statusId);
 
       if (dbError) {
         console.error('Error saving grade:', dbError);
@@ -249,9 +235,7 @@ const loadRequirementFromSupabase = async () => {
       const { data, error } = await supabase
         .from('org_requirement_status')
         .select('due')
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true)
+        .eq('id', statusId)
         .maybeSingle();
 
       if (error) throw error;
@@ -277,28 +261,10 @@ const loadRequirementFromSupabase = async () => {
       setError(null);
       setSavingApproval(true);
 
-      const { data: existing, error: fetchError } = await supabase
+      const { error: dbError } = await supabase
         .from('org_requirement_status')
-        .select('id')
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      const payload = { approved };
-      const { error: dbError } = existing
-        ? await supabase.from('org_requirement_status').update(payload).eq('id', existing.id)
-        : await supabase.from('org_requirement_status').insert({
-            ...payload,
-            orgUsername: orgname,
-            requirementId: reqid,
-            submitted: state.hasSubmitted,
-            score: state.maxScore,
-            start: new Date().toISOString().split('T')[0],
-            due: state.dueDate ? state.dueDate.toISOString().split('T')[0] : null,
-          });
+        .update({ approved })
+        .eq('id', statusId);
 
       if (dbError) throw dbError;
 
@@ -336,7 +302,7 @@ const loadRequirementFromSupabase = async () => {
 
       for (const file of Array.from(files)) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filePath = `${orgname}/${reqid}/${crypto.randomUUID()}_${safeName}`;
+        const filePath = `${orgname}/${reqid}/${statusId}/${crypto.randomUUID()}_${safeName}`;
 
 
         const { error: uploadError } = await supabaseAdmin.storage
@@ -351,9 +317,7 @@ const loadRequirementFromSupabase = async () => {
       await supabase
         .from('org_requirement_status')
         .update({ submitted: true })
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true);
+        .eq('id', statusId);
 
       updateState({ hasSubmitted: true });
       loadRequirementPdfs();
@@ -371,7 +335,7 @@ const loadRequirementFromSupabase = async () => {
       setError(null);
 
       const res = await fetch(
-        `/api/requirements/pdfs?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}`
+        `/api/requirements/pdfs?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}&statusId=${encodeURIComponent(statusId)}`
       );
 
       const json = await res.json();
@@ -438,45 +402,12 @@ const loadRequirementFromSupabase = async () => {
   try {
     setError(null);
 
-    // Check if a submission already exists
-    const { data: existing, error: fetchError } = await supabase
+    const { error: updateError } = await supabase
       .from('org_requirement_status')
-      .select('id')
-      .eq('orgUsername', orgname)
-      .eq('requirementId', reqid)
-      .eq('active', true)
-      .maybeSingle();
+      .update({ freeformans: state.freeformAnswer, submitted: true })
+      .eq('id', statusId);
 
-    if (fetchError) throw fetchError;
-
-    if (existing) {
-      // Update existing submission
-      const { error: updateError } = await supabase
-        .from('org_requirement_status')
-        .update({
-          freeformans: state.freeformAnswer,
-          submitted: true,
-        })
-        .eq('id', existing.id);
-
-      if (updateError) throw updateError;
-    } else {
-      // Insert new submission
-      const { error: insertError } = await supabase
-        .from('org_requirement_status')
-        .insert({
-          orgUsername: orgname,
-          requirementId: reqid,
-          freeformans: state.freeformAnswer,
-          submitted: true,
-          graded: false,
-          score: state.maxScore || 100,
-          start: new Date().toISOString().split('T')[0],
-          active: true,
-        });
-
-      if (insertError) throw insertError;
-    }
+    if (updateError) throw updateError;
 
     // ✅ CHANGED (only change): lock editing again after submit
     updateState({ hasSubmitted: true, isEditingFreeform: false });
@@ -492,7 +423,7 @@ const loadRequirementFromSupabase = async () => {
       setLoading('comments', true);
 
       const res = await fetch(
-        `/api/requirements/comments?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}`
+        `/api/requirements/comments?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}&statusId=${encodeURIComponent(statusId)}`
       );
 
       const json = await res.json();
@@ -527,6 +458,7 @@ const loadRequirementFromSupabase = async () => {
         body: JSON.stringify({
           orgname,
           reqid,
+          statusId,
           content,
         }),
       });
@@ -629,9 +561,7 @@ const loadRequirementFromSupabase = async () => {
       const { data, error } = await supabase
         .from('org_requirement_status')
         .select('submitted, approved')
-        .eq('orgUsername', orgname)
-        .eq('requirementId', reqid)
-        .eq('active', true)
+        .eq('id', statusId)
         .maybeSingle();
 
       if (error) {

@@ -33,12 +33,13 @@ export async function GET(req: Request) {
 
     const orgname = searchParams.get('orgname');
     const reqid = searchParams.get('reqid');
+    const statusId = searchParams.get('statusId');
 
     if (!orgname || !reqid) {
       return NextResponse.json({ error: 'Missing orgname or reqid' }, { status: 400 });
     }
 
-    const folderPath = `${orgname}/${reqid}`;
+    const folderPath = statusId ? `${orgname}/${reqid}/${statusId}` : `${orgname}/${reqid}`;
 
     const { data: files, error } = await supabaseAdmin.storage
       .from('requirement-pdfs')

@@ -16,17 +16,22 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const orgname = searchParams.get('orgname');
     const reqid = searchParams.get('reqid');
+    const statusId = searchParams.get('statusId');
 
     if (!orgname || !reqid) {
       return NextResponse.json({ error: 'Missing orgname or reqid' }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('requirementcomments')
-      .select('id, orgUsername, requirementId, authorEmail, authorName, content, createdAt')
+      .select('id, orgUsername, requirementId, statusId, authorEmail, authorName, content, createdAt')
       .eq('orgUsername', orgname)
       .eq('requirementId', reqid)
       .order('createdAt', { ascending: true });
+
+    if (statusId) query = query.eq('statusId', statusId);
+
+    const { data, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -51,6 +56,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const orgname = body?.orgname;
     const reqid = body?.reqid;
+    const statusId = body?.statusId;
     const content = (body?.content || '').toString().trim();
 
     if (!orgname || !reqid) {
@@ -66,11 +72,12 @@ export async function POST(req: Request) {
       .insert({
         orgUsername: orgname,
         requirementId: reqid,
+        statusId: statusId || null,
         authorEmail: email,
         authorName: name,
         content,
       })
-      .select('id, orgUsername, requirementId, authorEmail, authorName, content, createdAt')
+      .select('id, orgUsername, requirementId, statusId, authorEmail, authorName, content, createdAt')
       .single();
 
     if (error) {
