@@ -45,6 +45,11 @@ export default function OrgsRequirement({
   const [editRequirementsMode, setEditRequirementsMode] = useState(false);
   const [savingRequirements, setSavingRequirements] = useState(false);
 
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addingRequirement, setAddingRequirement] = useState(false);
+  const [newReqSection, setNewReqSection] = useState('');
+  const [newReqTitle, setNewReqTitle] = useState('');
+
   //console.log('ROLE IN OrgsRequirement:', role);
 
   // Fetch data from Supabase on client
@@ -312,6 +317,51 @@ export default function OrgsRequirement({
     }
   };
 
+  const addRequirement = async () => {
+    if (!newReqSection.trim() || !newReqTitle.trim()) {
+      alert('Please fill in both section and title.');
+      return;
+    }
+
+    setAddingRequirement(true);
+    try {
+      const newId = `req-${Date.now()}`;
+
+      const { error: reqError } = await supabase
+        .from('requirements')
+        .insert({ id: newId, section: newReqSection.trim(), title: newReqTitle.trim(), active: true });
+      if (reqError) throw reqError;
+
+      const { error: statusError } = await supabase
+        .from('org_requirement_status')
+        .insert({
+          orgUsername: username,
+          requirementId: newId,
+          submitted: false,
+          graded: false,
+          start: null,
+          due: null,
+          score: null,
+          grade: null,
+          active: true,
+        });
+      if (statusError) throw statusError;
+
+      const newReq: Requirement = { id: newId, section: newReqSection.trim(), title: newReqTitle.trim(), active: true };
+      setRequirements((prev) => [...prev, newReq]);
+      setOriginalRequirements((prev) => [...prev, newReq]);
+
+      setShowAddModal(false);
+      setNewReqSection('');
+      setNewReqTitle('');
+    } catch (err: any) {
+      console.error('Failed to add requirement:', err.message ?? err);
+      alert('Failed to add requirement.');
+    } finally {
+      setAddingRequirement(false);
+    }
+  };
+
   return (
     <div className="overflow-x-auto" key="requirements-1">
       <div className="mb-4 flex justify-between">
@@ -336,6 +386,15 @@ export default function OrgsRequirement({
                         className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
                       >
                         {editRequirementsMode ? 'Exit Edit Mode' : 'Edit Requirements'}
+                      </button>
+                    )}
+
+                    {role === 'osas' && (
+                      <button
+                        onClick={() => setShowAddModal(true)}
+                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
+                      >
+                        Add Requirement
                       </button>
                     )}
 
@@ -596,6 +655,58 @@ export default function OrgsRequirement({
 
         </tbody>
       </table>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md text-black">
+            <h2 className="text-lg font-semibold mb-4">Add Requirement</h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Section</label>
+              <input
+                type="text"
+                list="existing-sections"
+                value={newReqSection}
+                onChange={(e) => setNewReqSection(e.target.value)}
+                placeholder="e.g. Membership"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              />
+              <datalist id="existing-sections">
+                {Array.from(new Set(requirements.map((r) => r.section))).map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <input
+                type="text"
+                value={newReqTitle}
+                onChange={(e) => setNewReqTitle(e.target.value)}
+                placeholder="Requirement title"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowAddModal(false); setNewReqSection(''); setNewReqTitle(''); }}
+                className="px-4 py-2 rounded text-sm border border-gray-300 hover:bg-gray-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addRequirement}
+                disabled={addingRequirement}
+                className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer disabled:opacity-50"
+              >
+                {addingRequirement ? 'Adding...' : 'Add Requirement'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
