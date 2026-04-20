@@ -552,7 +552,7 @@ const loadRequirementFromSupabase = async () => {
       // page is now ready to render
       setLoading('page', false);
     }
-  }, [status, session]);
+  }, [status, session, statusId]);
 
 
   // Initial data load
@@ -581,7 +581,7 @@ const loadRequirementFromSupabase = async () => {
     loadSubmissionStatus();
     loadRequirementPdfs();
     loadComments();
-  }, [orgname, reqid]);
+  }, [orgname, reqid, statusId]);
 
   const handleSubmitGrade = async () => {
     if (!checkPermission('osas', 'submit grades')) return;
