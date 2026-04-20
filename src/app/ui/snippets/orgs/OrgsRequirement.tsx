@@ -50,6 +50,9 @@ export default function OrgsRequirement({
   const [newReqSection, setNewReqSection] = useState('');
   const [newReqTitle, setNewReqTitle] = useState('');
 
+  const [selectedReqIds, setSelectedReqIds] = useState<Set<string>>(new Set());
+  const [deletingRequirements, setDeletingRequirements] = useState(false);
+
   //console.log('ROLE IN OrgsRequirement:', role);
 
   // Fetch data from Supabase on client
@@ -269,18 +272,18 @@ export default function OrgsRequirement({
     try {
       const originalMap = new Map(originalRequirements.map((r) => [r.id, r]));
 
-      const titleUpdates = requirements
+      const fieldUpdates = requirements
         .filter((r) => {
           const orig = originalMap.get(r.id);
-          return orig && (orig.title !== r.title);
+          return orig && (orig.title !== r.title || orig.section !== r.section);
         })
-        .map((r) => ({ id: r.id, title: r.title }));
+        .map((r) => ({ id: r.id, title: r.title, section: r.section }));
 
-      if (titleUpdates.length > 0) {
-        for (const u of titleUpdates) {
+      if (fieldUpdates.length > 0) {
+        for (const u of fieldUpdates) {
           const { error } = await supabase
             .from('requirements')
-            .update({ title: u.title })
+            .update({ title: u.title, section: u.section })
             .eq('id', u.id);
 
           if (error) throw error;
@@ -360,6 +363,46 @@ export default function OrgsRequirement({
     }
   };
 
+  const deleteRequirements = async () => {
+    if (selectedReqIds.size === 0) {
+      alert('No requirements selected.');
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ${selectedReqIds.size} requirement(s)? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingRequirements(true);
+    try {
+      const ids = Array.from(selectedReqIds);
+
+      const { error: reqError } = await supabase
+        .from('requirements')
+        .update({ active: false })
+        .in('id', ids);
+      if (reqError) throw reqError;
+
+      const { error: statusError } = await supabase
+        .from('org_requirement_status')
+        .update({ active: false })
+        .in('requirementId', ids)
+        .eq('orgUsername', username);
+      if (statusError) throw statusError;
+
+      setRequirements((prev) => prev.filter((r) => !selectedReqIds.has(r.id)));
+      setOriginalRequirements((prev) => prev.filter((r) => !selectedReqIds.has(r.id)));
+      setStatuses((prev) => prev.filter((s) => !selectedReqIds.has(s.requirementId)));
+      setSelectedReqIds(new Set());
+    } catch (err: any) {
+      console.error('Failed to delete requirements:', err.message ?? err);
+      alert('Failed to delete requirements.');
+    } finally {
+      setDeletingRequirements(false);
+    }
+  };
+
   return (
     <div className="overflow-x-auto" key="requirements-1">
       <div className="mb-4 flex justify-between">
@@ -380,6 +423,7 @@ export default function OrgsRequirement({
                         onClick={() => {
                           setEditRequirementsMode((prev) => !prev);
                           if (!editRequirementsMode) setEditMode(false);
+                          setSelectedReqIds(new Set());
                         }}
                         className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
                       >
@@ -393,6 +437,16 @@ export default function OrgsRequirement({
                         className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
                       >
                         Add Requirement
+                      </button>
+                    )}
+
+                    {role === 'osas' && editRequirementsMode && (
+                      <button
+                        onClick={deleteRequirements}
+                        disabled={deletingRequirements || selectedReqIds.size === 0}
+                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer disabled:opacity-50"
+                      >
+                        {deletingRequirements ? 'Deleting...' : 'Delete Requirement'}
                       </button>
                     )}
 
@@ -436,6 +490,9 @@ export default function OrgsRequirement({
       {requirements.length > 0 && <table className="min-w-full border border-gray-300 bg-white text-black text-xs sm:text-sm md:text-base">
         <thead>
           <tr className="bg-white text-black">
+            {editRequirementsMode && role === 'osas' && (
+              <th className="border border-gray-300 px-3 py-2 text-center w-8">Select</th>
+            )}
             <th className="border border-gray-300 px-3 py-2 text-left w-2/3">Requirement</th>
             <th className="border border-gray-300 px-3 py-2 text-left">View</th>
             <th className="border border-gray-300 px-3 py-2 text-left">Start</th>
@@ -449,12 +506,45 @@ export default function OrgsRequirement({
           {Object.entries(groupedRequirements).map(([section, reqs]) => (
             <React.Fragment key={section}>
               <tr className="bg-gray-200">
-                <td colSpan={7} className="px-3 py-2 font-bold text-black">{section}</td>
+                <td colSpan={editRequirementsMode && role === 'osas' ? 8 : 7} className="px-3 py-2 font-bold text-black">
+                  {editRequirementsMode && role === 'osas' ? (
+                    <input
+                      type="text"
+                      value={section}
+                      onChange={(e) => {
+                        const newSection = e.target.value;
+                        setRequirements((prev) =>
+                          prev.map((r) => r.section === section ? { ...r, section: newSection } : r)
+                        );
+                      }}
+                      className="w-full border border-gray-400 rounded px-2 py-1 font-bold bg-white text-black"
+                    />
+                  ) : (
+                    section
+                  )}
+                </td>
               </tr>
               {reqs.map((req) => {
                 const status = getStatus(req.id);
                 return (
                   <tr key={req.id} className="border-b border-gray-200">
+                    {editRequirementsMode && role === 'osas' && (
+                      <td className="border px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedReqIds.has(req.id)}
+                          onChange={(e) => {
+                            setSelectedReqIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(req.id);
+                              else next.delete(req.id);
+                              return next;
+                            });
+                          }}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="border px-3 py-2">
                       {editRequirementsMode ? (
                         <input
@@ -634,7 +724,7 @@ export default function OrgsRequirement({
 
               {/* Section Total row */}
               <tr className="bg-gray-100 font-semibold">
-                <td colSpan={6} className="border px-3 py-2 text-right">
+                <td colSpan={editRequirementsMode && role === 'osas' ? 7 : 6} className="border px-3 py-2 text-right">
                   Section Total:
                 </td>
                 <td className="border px-3 py-2">
@@ -647,7 +737,7 @@ export default function OrgsRequirement({
 
           {/* Grand Total row */}
           <tr className="bg-gray-300 font-bold">
-            <td colSpan={6} className="border px-3 py-3 text-right">
+            <td colSpan={editRequirementsMode && role === 'osas' ? 7 : 6} className="border px-3 py-3 text-right">
               Final Total Score:
             </td>
             <td className="border px-3 py-3">
