@@ -176,6 +176,7 @@ const loadRequirementFromSupabase = async () => {
         .select('grade, score, freeformans')
         .eq('orgUsername', orgname)
         .eq('requirementId', reqid)
+        .eq('active', true)
         .maybeSingle() as any;
 
       if (fetchError) {
@@ -211,6 +212,7 @@ const loadRequirementFromSupabase = async () => {
         .select('id')
         .eq('orgUsername', orgname)
         .eq('requirementId', reqid)
+        .eq('active', true)
         .maybeSingle();
 
       const payload = { grade: newScore, graded: true };
@@ -249,6 +251,7 @@ const loadRequirementFromSupabase = async () => {
         .select('due')
         .eq('orgUsername', orgname)
         .eq('requirementId', reqid)
+        .eq('active', true)
         .maybeSingle();
 
       if (error) throw error;
@@ -279,6 +282,7 @@ const loadRequirementFromSupabase = async () => {
         .select('id')
         .eq('orgUsername', orgname)
         .eq('requirementId', reqid)
+        .eq('active', true)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -348,7 +352,8 @@ const loadRequirementFromSupabase = async () => {
         .from('org_requirement_status')
         .update({ submitted: true })
         .eq('orgUsername', orgname)
-        .eq('requirementId', reqid);
+        .eq('requirementId', reqid)
+        .eq('active', true);
 
       updateState({ hasSubmitted: true });
       loadRequirementPdfs();
@@ -439,6 +444,7 @@ const loadRequirementFromSupabase = async () => {
       .select('id')
       .eq('orgUsername', orgname)
       .eq('requirementId', reqid)
+      .eq('active', true)
       .maybeSingle();
 
     if (fetchError) throw fetchError;
@@ -625,6 +631,7 @@ const loadRequirementFromSupabase = async () => {
         .select('submitted, approved')
         .eq('orgUsername', orgname)
         .eq('requirementId', reqid)
+        .eq('active', true)
         .maybeSingle();
 
       if (error) {
