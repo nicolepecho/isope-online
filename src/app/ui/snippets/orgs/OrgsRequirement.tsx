@@ -120,8 +120,6 @@ export default function OrgsRequirement({
 
   if (loading) return <div className="p-4 text-black">Loading requirements...</div>;
 
-  if (requirements.length === 0) return <div className="p-4 text-black">No requirements found.</div>;
-
   const deactivateAllStatuses = async () => {
   console.log('[Archive] Action triggered');
 
@@ -431,7 +429,11 @@ export default function OrgsRequirement({
 
       </div>
 
-      <table className="min-w-full border border-gray-300 bg-white text-black text-xs sm:text-sm md:text-base">
+      {requirements.length === 0 && (
+        <div className="p-4 text-black">No requirements found.</div>
+      )}
+
+      {requirements.length > 0 && <table className="min-w-full border border-gray-300 bg-white text-black text-xs sm:text-sm md:text-base">
         <thead>
           <tr className="bg-white text-black">
             <th className="border border-gray-300 px-3 py-2 text-left w-2/3">Requirement</th>
@@ -654,7 +656,7 @@ export default function OrgsRequirement({
           </tr>
 
         </tbody>
-      </table>
+      </table>}
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
