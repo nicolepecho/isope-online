@@ -2,7 +2,7 @@
 -- iSOPE Online — Database Schema
 -- ============================================================
 -- Run this entire file in the Supabase SQL Editor to recreate
--- all tables from scratch in a new Supabase project.
+-- all tables and storage buckets from scratch in a new project.
 --
 -- Prerequisites:
 --   - New Supabase project created
@@ -18,7 +18,23 @@
 
 
 -- ============================================================
--- STEP 1: Custom sequence for org_requirement_status
+-- STEP 1: Storage Buckets
+-- These are required for file uploads.
+--   orglogos        — stores org logo/avatar images
+--   requirement-pdfs — stores PDF submissions from orgs
+-- Both are public so files can be displayed via public URL.
+-- ============================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('orglogos', 'orglogos', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('requirement-pdfs', 'requirement-pdfs', true)
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================
+-- STEP 2: Custom sequence for org_requirement_status
 --         Generates zero-padded 6-digit text IDs (e.g. 000001)
 -- ============================================================
 CREATE SEQUENCE IF NOT EXISTS org_requirement_status_auto_id_seq;
@@ -153,8 +169,8 @@ CREATE TABLE evaluation_templates (
 -- ============================================================
 -- TABLE: evaluation_template_questions
 -- Individual questions belonging to an evaluation template.
--- type can be e.g. multiple_choice, scale, freeform.
--- options is a JSONB array of choices (for multiple choice).
+-- type can be: input, dropdown, likert, checkbox
+-- options is a JSONB array of choices (for dropdown/checkbox).
 -- ============================================================
 CREATE TABLE evaluation_template_questions (
   id           uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
