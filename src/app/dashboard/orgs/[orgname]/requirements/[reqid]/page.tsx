@@ -20,6 +20,7 @@ export default function RequirementPage({ params }: { params: Promise<{ orgname:
   const { orgname, reqid } = use(params);
   const searchParams = useSearchParams();
   const statusId = searchParams.get('statusId') ?? '';
+  const archiveYear = searchParams.get('year') ?? '';
   const { data: session, status } = useSession();
   const [approved, setApproved] = useState(false);
   const [initialApproved, setInitialApproved] = useState(false);
@@ -302,7 +303,7 @@ const loadRequirementFromSupabase = async () => {
 
       for (const file of Array.from(files)) {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filePath = `${orgname}/${reqid}/${statusId}/${crypto.randomUUID()}_${safeName}`;
+        const filePath = `${orgname}/${reqid}/${crypto.randomUUID()}_${safeName}`;
 
 
         const { error: uploadError } = await supabaseAdmin.storage
@@ -335,7 +336,7 @@ const loadRequirementFromSupabase = async () => {
       setError(null);
 
       const res = await fetch(
-        `/api/requirements/pdfs?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}&statusId=${encodeURIComponent(statusId)}`
+        `/api/requirements/pdfs?orgname=${encodeURIComponent(orgname)}&reqid=${encodeURIComponent(reqid)}${archiveYear ? `&year=${encodeURIComponent(archiveYear)}` : ''}`
       );
 
       const json = await res.json();

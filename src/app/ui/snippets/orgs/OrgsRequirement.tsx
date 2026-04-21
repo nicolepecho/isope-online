@@ -180,7 +180,7 @@ export default function OrgsRequirement({
       score: null,
       grade: null,
 
-      year: currentYear,
+      year: currentYear + 1,
       active: true
     }));
 
@@ -189,18 +189,15 @@ export default function OrgsRequirement({
       duplicatedStatuses
     );
 
-    // 3. Move uploaded files into per-status subfolders before deactivating
+    // 3. Move uploaded files into year-based archive subfolders before deactivating
     console.log('[Archive][3] Moving files to archive subfolders…');
 
-    const statusesForArchive = currentStatuses.map((s: any) => ({
-      requirementId: s.requirementId,
-      statusId: s.id,
-    }));
+    const requirementIds = [...new Set(currentStatuses.map((s: any) => s.requirementId))];
 
     await fetch('/api/requirements/archive-files', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orgname: username, statuses: statusesForArchive }),
+      body: JSON.stringify({ orgname: username, year: currentYear, requirementIds }),
     });
 
     console.log('[Archive][3] Files moved');

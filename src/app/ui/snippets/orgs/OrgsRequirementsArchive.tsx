@@ -171,7 +171,7 @@ export default function OrgsRequirementArchive({ username }: { username: string 
                           <Link
                             href={{
                               pathname: `/dashboard/orgs/${username}/requirements/${req.id}`,
-                              query: { statusId: status.id },
+                              query: { statusId: status.id, year },
                             }}
                             className="text-blue-500 hover:underline flex flex-col items-center"
                           >

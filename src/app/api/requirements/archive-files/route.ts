@@ -12,16 +12,17 @@ export async function POST(req: Request) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (role !== 'osas') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const { orgname, statuses } = await req.json() as {
+    const { orgname, year, requirementIds } = await req.json() as {
       orgname: string;
-      statuses: { requirementId: string; statusId: string }[];
+      year: number;
+      requirementIds: string[];
     };
 
-    if (!orgname || !Array.isArray(statuses)) {
-      return NextResponse.json({ error: 'Missing orgname or statuses' }, { status: 400 });
+    if (!orgname || !year || !Array.isArray(requirementIds)) {
+      return NextResponse.json({ error: 'Missing orgname, year, or requirementIds' }, { status: 400 });
     }
 
-    for (const { requirementId, statusId } of statuses) {
+    for (const requirementId of requirementIds) {
       const rootPath = `${orgname}/${requirementId}`;
 
       const { data: files } = await supabaseAdmin.storage
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
       for (const file of actualFiles) {
         const fromPath = `${rootPath}/${file.name}`;
-        const toPath = `${rootPath}/${statusId}/${file.name}`;
+        const toPath = `${rootPath}/${year}/${file.name}`;
 
         await supabaseAdmin.storage.from('requirement-pdfs').copy(fromPath, toPath);
         await supabaseAdmin.storage.from('requirement-pdfs').remove([fromPath]);
