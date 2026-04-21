@@ -30,7 +30,8 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
     if (!res.ok) {
       setMessage(data.error || "Upload failed");
     } else {
-      setMessage(`✅ ${data.count} members imported`);
+      const skippedText = data.skipped > 0 ? `, ${data.skipped} skipped (already exist)` : '';
+      setMessage(`✅ ${data.count} members imported${skippedText}`);
       setFile(null);
     }
   }
@@ -65,7 +66,7 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
               </h2>
               <button
                 onClick={() => setOpen(false)}
-                className="text-black-500 cursor-pointer hover:text-red-500 font-bold"
+                className="text-red-500 cursor-pointer hover:text-red-700 font-bold"
               >
                 ✕
               </button>
@@ -107,7 +108,7 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
             </button>
 
             {message && (
-              <p className="text-sm text-center">{message}</p>
+              <p className={`text-sm text-center font-medium ${message.startsWith('✅') ? 'text-green-600' : 'text-red-600'}`}>{message}</p>
             )}
           </div>
         </div>

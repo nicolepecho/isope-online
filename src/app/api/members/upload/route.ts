@@ -51,17 +51,38 @@ export async function POST(req: Request) {
     );
   }
 
+  // Fetch existing member names for this org to avoid duplicates
+  const { data: existing, error: fetchError } = await supabase
+    .from("member")
+    .select("student_name")
+    .eq("organizations", orgname);
+
+  if (fetchError) {
+    console.error(fetchError);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
+
+  const existingNames = new Set(
+    (existing || []).map((m) => m.student_name.trim().toLowerCase())
+  );
+
+  const newMembers = validMembers.filter(
+    (m) => !existingNames.has(m.student_name.toLowerCase())
+  );
+  const skipped = validMembers.length - newMembers.length;
+
+  if (newMembers.length === 0) {
+    return NextResponse.json({ count: 0, skipped, message: "All members already exist" });
+  }
+
   const { error } = await supabase
     .from("member")
-    .upsert(validMembers);
+    .insert(newMembers);
 
   if (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Database error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
-  return NextResponse.json({ count: validMembers.length });
+  return NextResponse.json({ count: newMembers.length, skipped });
 }
