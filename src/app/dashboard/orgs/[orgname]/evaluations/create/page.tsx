@@ -144,9 +144,17 @@ export default function Page({ params }: { params: Promise<{ orgname: string }> 
   const saveForm = async () => {
   try {
     setError(null);
-    if (!templateId) throw new Error("No active template found.");
-
     setLoading((p) => ({ ...p, saving: true }));
+
+    let activeTemplateId = templateId;
+
+    if (!activeTemplateId) {
+      const res = await fetch("/api/evaluation-template/create", { method: "POST" });
+      const json = await readJsonSafe(res);
+      if (!res.ok) throw new Error(json?.error || "Failed to create template");
+      activeTemplateId = json.id;
+      setTemplateId(activeTemplateId);
+    }
 
     const payload = questions.map((q, idx) => ({
       type: q.type,
@@ -157,7 +165,7 @@ export default function Page({ params }: { params: Promise<{ orgname: string }> 
     }));
 
     const res = await fetch(
-      `/api/evaluation-template/${encodeURIComponent(templateId)}/questions`,
+      `/api/evaluation-template/${encodeURIComponent(activeTemplateId!)}/questions`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
