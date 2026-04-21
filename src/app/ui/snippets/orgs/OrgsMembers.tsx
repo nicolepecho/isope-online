@@ -165,7 +165,7 @@ export default function OrgsMembers({ username }: { username: string }) {
         {isOSAS && (
           <button
             onClick={() => router.push(`/dashboard/orgs/${username}/evaluations/create`)}
-            className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-blue-700 text-sm cursor-pointer"
+            className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
           >
             Edit Evaluation
           </button>
@@ -177,7 +177,7 @@ export default function OrgsMembers({ username }: { username: string }) {
               setEditMembersMode((prev) => !prev);
               setSelectedMemberIds(new Set());
             }}
-            className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
+            className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
           >
             {editMembersMode ? 'Exit Edit Mode' : 'Edit Members'}
           </button>

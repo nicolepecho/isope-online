@@ -432,7 +432,7 @@ export default function OrgsRequirement({
                         setEditMode((prev) => !prev);
                         if (!editMode) setEditRequirementsMode(false);
                       }}
-                      className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
+                      className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
                     >
                       {editMode ? 'Exit Edit Mode' : 'Edit Scores'}
                     </button>
@@ -444,7 +444,7 @@ export default function OrgsRequirement({
                           if (!editRequirementsMode) setEditMode(false);
                           setSelectedReqIds(new Set());
                         }}
-                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
+                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
                       >
                         {editRequirementsMode ? 'Exit Edit Mode' : 'Edit Requirements'}
                       </button>
@@ -453,7 +453,7 @@ export default function OrgsRequirement({
                     {role === 'osas' && editRequirementsMode && (
                       <button
                         onClick={() => setShowAddModal(true)}
-                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
+                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
                       >
                         Add Requirement
                       </button>
@@ -810,7 +810,7 @@ export default function OrgsRequirement({
               <button
                 onClick={addRequirement}
                 disabled={addingRequirement}
-                className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer disabled:opacity-50"
+                className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer disabled:opacity-50"
               >
                 {addingRequirement ? 'Adding...' : 'Add Requirement'}
               </button>

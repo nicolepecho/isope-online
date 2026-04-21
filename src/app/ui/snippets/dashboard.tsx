@@ -90,7 +90,7 @@ const OsasUsersSection: FC = () => {
             <button
               onClick={handleDelete}
               disabled={deleting || selected.size === 0}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer disabled:opacity-50"
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm cursor-pointer disabled:opacity-50"
             >
               {deleting ? 'Deleting...' : 'Delete User'}
             </button>

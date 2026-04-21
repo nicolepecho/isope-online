@@ -61,7 +61,7 @@ export function SubmissionInfo({
           <h3 className="font-semibold text-gray-900">Grade</h3>
           {isOSAS && !state.isEditingGrade ? (
             <button onClick={() => updateState({ isEditingGrade: true })} disabled={state.isEditingInstructions || state.loading.grade}
-              className={`flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 bg-[#014fb3] hover:bg-[#013db3] text-white text-sm font-medium rounded-lg transition-colors ${
                 state.isEditingInstructions || state.loading.requirement ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
               }`}>
               <PencilSquareIcon className="w-5 h-5" />
@@ -163,7 +163,7 @@ export function SubmissionInfo({
             <button
               onClick={handleSaveApproval}
               disabled={savingApproval}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+              className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] transition disabled:opacity-50"
             >
               {savingApproval ? "Saving..." : "Save"}
             </button>
@@ -184,7 +184,7 @@ export function SubmissionInfo({
           <button
             onClick={handleAddComment}
             disabled={loadingCommentAction || !(commentText || '').trim()}
-            className="cursor-pointer mt-2 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm $"
+            className="cursor-pointer mt-2 w-full bg-[#014fb3] hover:bg-[#013db3] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
           >
             Add Comment
           </button>

@@ -51,7 +51,7 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="bg-[#014fb3]  text-white px-4 py-2 rounded hover:bg-blue-700 text-sm cursor-pointer"
+        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] text-sm cursor-pointer"
       >
         Upload Members
       </button>
@@ -102,7 +102,7 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
             <button
               onClick={handleUpload}
               disabled={!file || loading}
-              className="w-full py-2 bg-[#014fb3] text-white rounded enabled:cursor-pointer enabled:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+              className="w-full py-2 bg-[#014fb3] text-white rounded enabled:cursor-pointer enabled:hover:bg-[#013db3] disabled:opacity-50 disabled:cursor-not-allowed" 
             >
               {loading ? "Uploading..." : "Upload"}
             </button>

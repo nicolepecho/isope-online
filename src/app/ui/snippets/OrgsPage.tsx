@@ -411,7 +411,7 @@ export default function OrgsPage({ org }: OrgsProp) {
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#014fb3] hover:bg-[#013584] rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#014fb3] hover:bg-[#013db3] rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? (
                     <>
@@ -442,7 +442,7 @@ export default function OrgsPage({ org }: OrgsProp) {
               <div className="flex gap-2">
                 {/* Edit Button */}
                 <button
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#014fb3] rounded-lg hover:bg-[#013584] transition-all shadow-sm hover:shadow-md flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#014fb3] rounded-lg hover:bg-[#013db3] transition-all shadow-sm hover:shadow-md flex items-center gap-2 cursor-pointer"
                   onClick={() => setIsEditingOrg(true)}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

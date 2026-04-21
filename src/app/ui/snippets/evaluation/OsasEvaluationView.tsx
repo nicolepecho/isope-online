@@ -68,7 +68,7 @@ export default function OsasEvaluationView({
                 <button 
                   type="button" 
                   onClick={addQuestion} 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition-colors cursor-pointer"
+                  className="bg-[#014fb3] hover:bg-[#013db3] text-white px-4 py-2 rounded font-medium transition-colors cursor-pointer"
                 >
                   Add Question
                 </button>

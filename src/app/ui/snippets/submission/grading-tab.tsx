@@ -51,7 +51,7 @@ export function GradingTab({
       <div className="space-y-4">
         {state.userRole === 'org' && (
           <div className="flex justify-end">
-            <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors cursor-pointer">
+            <label className="flex items-center gap-2 px-4 py-2 bg-[#014fb3] hover:bg-[#013db3] text-white font-medium rounded-lg transition-colors cursor-pointer">
               <ArrowUpTrayIcon className="w-5 h-5" />
               Upload File
               <input
@@ -209,7 +209,7 @@ export function GradingTab({
           <button
             onClick={handleSubmitFreeform}
             disabled={freeformLocked || !(state.freeformAnswer || '').trim()}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 rounded-lg transition-colors cursor-pointer"
+            className="w-full bg-[#014fb3] hover:bg-[#013db3] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 rounded-lg transition-colors cursor-pointer"
           >
             Submit
           </button>
