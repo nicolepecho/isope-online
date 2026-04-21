@@ -9,20 +9,19 @@ import { fetchAccessibleOrgs } from '@/app/lib/access-control';
 
 const ORG_SLICE_LIMIT = 3;
 
-const OrgCard: FC<{ org: any }> = ({ org }) => {
+const OrgCard: FC<{ org: any; role: string }> = ({ org, role }) => {
   const router = useRouter();
 
-  // Use real progress from org object
   const progress = org.progress ?? 0;
 
-  // Navigate to org dashboard
   const goToOrg = () => router.push(`./dashboard/orgs/${org.username}`);
 
-  // Navigate to dues tab
   const goToDues = (e: React.MouseEvent) => {
     e.stopPropagation();
     router.push(`/dashboard/orgs/${org.username}?tab=Requirements`);
   };
+
+  const showRequirements = role !== 'member';
 
   return (
     <div
@@ -72,15 +71,17 @@ const OrgCard: FC<{ org: any }> = ({ org }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-5 pt-3 grid grid-cols-[1fr_auto] gap-2">
+      <div className={`mt-5 pt-3 gap-2 ${showRequirements ? 'grid grid-cols-[1fr_auto]' : 'flex justify-end'}`}>
         {/* Requirements */}
-        <button
-          onClick={goToDues}
-          className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer"
-        >
-          <DocumentIcon className="w-5 h-5" />
-          <span>Requirements</span>
-        </button>
+        {showRequirements && (
+          <button
+            onClick={goToDues}
+            className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer"
+          >
+            <DocumentIcon className="w-5 h-5" />
+            <span>Requirements</span>
+          </button>
+        )}
 
         {/* Notifications */}
         <button
@@ -472,7 +473,7 @@ const OrgsDashboard: FC = () => {
         <div className="flex flex-col items-center gap-6">
           <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredOrgs.map((org) => (
-              <OrgCard key={org.username} org={org} />
+              <OrgCard key={org.username} org={org} role={role} />
             ))}
           </div>
 

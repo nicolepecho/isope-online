@@ -26,6 +26,8 @@ const NotificationSidebar: FC = () => {
   const [requirements, setRequirements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set());
+  const [role, setRole] = useState('');
+  const [memberOrgs, setMemberOrgs] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchRequirements = async () => {
@@ -34,8 +36,9 @@ const NotificationSidebar: FC = () => {
         setLoading(false);
         return;
       }
-  
+
       const role = ((((session?.user as any)?.role) || '').toString().toLowerCase());
+      setRole(role);
       const name = ((session?.user as any)?.name || '');
       const orgIdentifier = ((session?.user as any)?.username || session?.user?.name || name);
 
@@ -45,6 +48,12 @@ const NotificationSidebar: FC = () => {
         name,
         orgIdentifier,
       });
+
+      if (role === 'member') {
+        setMemberOrgs(accessibleOrgs);
+        setLoading(false);
+        return;
+      }
 
       const accessibleUsernames = accessibleOrgs.map((o: any) => o.username);
 
@@ -203,79 +212,90 @@ const NotificationSidebar: FC = () => {
             <h3 className="font-bold text-base sm:text-lg">TO DO</h3>
           </div>
 
-          {/* Counter */}
-          {!loading && (
-            <h4 className="text-md text-blue-200 mb-4">
-              {requirements.length} item{requirements.length === 1 ? '' : 's'}
-            </h4>
+          {loading && (
+            <p className="text-sm text-blue-200 italic">Loading notifications...</p>
           )}
 
-          {/* Task Checkboxes */}
-          <div className="space-y-3">
-            {loading && (
-              <p className="text-sm text-blue-200 italic">
-                Loading notifications...
-              </p>
-            )}
+          {/* Member view: org buttons */}
+          {!loading && role === 'member' && (
+            <div className="space-y-2">
+              {memberOrgs.length === 0 ? (
+                <p className="text-sm text-blue-200 italic">No organizations found.</p>
+              ) : (
+                memberOrgs.map((org: any) => (
+                  <Link
+                    key={org.username}
+                    href={`/dashboard/orgs/${org.username}`}
+                    className="block w-full text-center bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-4 rounded-md text-sm transition-colors"
+                  >
+                    {org.name}
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
 
-            {!loading && requirements.length === 0 && (
-              <p className="text-sm text-blue-200 italic">
-                No requirements to do.
-              </p>
-            )}
+          {/* Non-member view: requirements list */}
+          {!loading && role !== 'member' && (
+            <>
+              <h4 className="text-md text-blue-200 mb-4">
+                {requirements.length} item{requirements.length === 1 ? '' : 's'}
+              </h4>
 
-            {!loading && requirements.length > 0 && (
-              <div className="bg-blue-800/50 rounded-lg p-3 max-h-64 overflow-y-auto">
-                {Object.entries(
-                  requirements.reduce((acc: any, req: any) => {
-                    const orgName = req.orgs?.name || req.orgUsername || 'Unknown Organization';
-                    if (!acc[orgName]) acc[orgName] = [];
-                    acc[orgName].push(req);
-                    return acc;
-                  }, {})
-                ).map(([orgName, items]: any) => (
-                  <div key={orgName} className="mb-4 last:mb-0">
-                    <button
-                      onClick={() => toggleOrg(orgName)}
-                      className="w-full flex items-center gap-2 text-xs font-bold text-yellow-300 uppercase tracking-wide mb-2 hover:text-yellow-200 transition-colors cursor-pointer"
-                    >
-                      {expandedOrgs.has(orgName) ? (
-                        <ChevronDownIcon className="w-4 h-4" />
-                      ) : (
-                        <ChevronRightIcon className="w-4 h-4" />
-                      )}
-                      {orgName}
-                      <span className="text-blue-200 normal-case">({items.length})</span>
-                    </button>
+              <div className="space-y-3">
+                {requirements.length === 0 && (
+                  <p className="text-sm text-blue-200 italic">No requirements to do.</p>
+                )}
 
-                    {expandedOrgs.has(orgName) && (
-                      <div className="space-y-2">
-                        {items.map((req: any) => (
-                          <div
-                            key={req.id}
-                            className="flex items-start cursor-pointer group"
-                          >
-                            
+                {requirements.length > 0 && (
+                  <div className="bg-blue-800/50 rounded-lg p-3 max-h-64 overflow-y-auto">
+                    {Object.entries(
+                      requirements.reduce((acc: any, req: any) => {
+                        const orgName = req.orgs?.name || req.orgUsername || 'Unknown Organization';
+                        if (!acc[orgName]) acc[orgName] = [];
+                        acc[orgName].push(req);
+                        return acc;
+                      }, {})
+                    ).map(([orgName, items]: any) => (
+                      <div key={orgName} className="mb-4 last:mb-0">
+                        <button
+                          onClick={() => toggleOrg(orgName)}
+                          className="w-full flex items-center gap-2 text-xs font-bold text-yellow-300 uppercase tracking-wide mb-2 hover:text-yellow-200 transition-colors cursor-pointer"
+                        >
+                          {expandedOrgs.has(orgName) ? (
+                            <ChevronDownIcon className="w-4 h-4" />
+                          ) : (
+                            <ChevronRightIcon className="w-4 h-4" />
+                          )}
+                          {orgName}
+                          <span className="text-blue-200 normal-case">({items.length})</span>
+                        </button>
 
-                            <Link
-                              href={`/dashboard/orgs/${req.orgUsername}/requirements/${req.requirementId}`}
-                              className="text-sm leading-tight group-hover:text-blue-200 transition-colors"
-                            >
-                              {req.requirements?.title}
-                              <br />
-                              <span className={`text-xs ${req.graded ? 'text-green-200' : 'text-red-300'}`}>
-                                Status: {!req.submitted ? 'Not submitted' : 'Submitted'} / {!req.graded ? 'Not graded' : 'Graded'}
-                              </span>
-                            </Link>
+                        {expandedOrgs.has(orgName) && (
+                          <div className="space-y-2">
+                            {items.map((req: any) => (
+                              <div key={req.id} className="flex items-start cursor-pointer group">
+                                <Link
+                                  href={`/dashboard/orgs/${req.orgUsername}/requirements/${req.requirementId}`}
+                                  className="text-sm leading-tight group-hover:text-blue-200 transition-colors"
+                                >
+                                  {req.requirements?.title}
+                                  <br />
+                                  <span className={`text-xs ${req.graded ? 'text-green-200' : 'text-red-300'}`}>
+                                    Status: {!req.submitted ? 'Not submitted' : 'Submitted'} / {!req.graded ? 'Not graded' : 'Graded'}
+                                  </span>
+                                </Link>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </>
