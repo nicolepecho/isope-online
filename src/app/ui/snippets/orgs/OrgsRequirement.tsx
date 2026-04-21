@@ -450,7 +450,7 @@ export default function OrgsRequirement({
                       </button>
                     )}
 
-                    {role === 'osas' && (
+                    {role === 'osas' && editRequirementsMode && (
                       <button
                         onClick={() => setShowAddModal(true)}
                         className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer"
@@ -463,7 +463,7 @@ export default function OrgsRequirement({
                       <button
                         onClick={deleteRequirements}
                         disabled={deletingRequirements || selectedReqIds.size === 0}
-                        className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013584] text-sm cursor-pointer disabled:opacity-50"
+                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm cursor-pointer disabled:opacity-50"
                       >
                         {deletingRequirements ? 'Deleting...' : 'Delete Requirement'}
                       </button>
