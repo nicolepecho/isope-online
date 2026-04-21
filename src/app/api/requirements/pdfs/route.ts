@@ -49,15 +49,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const { data: pub } = supabaseAdmin.storage
-      .from('requirement-pdfs')
-      .getPublicUrl('');
-
-    const basePublicUrl = pub.publicUrl.replace(/\/$/, '');
-
-    const pdfs = (files || []).map((f: any) => {
+    const pdfs = (files || []).filter((f: any) => f.metadata !== null).map((f: any) => {
       const filepath = `${folderPath}/${f.name}`;
-      const publicUrl = `${basePublicUrl}/${filepath}`;
+      const { data: { publicUrl } } = supabaseAdmin.storage
+        .from('requirement-pdfs')
+        .getPublicUrl(filepath);
 
       return {
         id: filepath,
