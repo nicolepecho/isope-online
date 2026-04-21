@@ -3,9 +3,167 @@ import { useEffect, useState, FC } from 'react';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/app/lib/database';
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Orgs } from '@/app/lib/definitions';
 import { fetchAccessibleOrgs } from '@/app/lib/access-control';
+
+// ─── OSAS Users Section ───────────────────────────────────────────────────────
+
+type OsasUser = { id: number; Email: string; Name: string };
+
+const OsasUsersSection: FC = () => {
+  const [users, setUsers] = useState<OsasUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addEmail, setAddEmail] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const res = await fetch('/api/users/osas');
+    const json = await res.json();
+    setUsers(json.users || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const toggleSelect = (id: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDelete = async () => {
+    if (selected.size === 0) return;
+    setDeleting(true);
+    const res = await fetch('/api/users/osas', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(selected) }),
+    });
+    const json = await res.json();
+    if (!res.ok) { alert(json.error || 'Delete failed'); }
+    else { setUsers(prev => prev.filter(u => !selected.has(u.id))); setSelected(new Set()); }
+    setDeleting(false);
+  };
+
+  const handleAdd = async () => {
+    setAddError('');
+    if (!addEmail.trim()) { setAddError('Email is required'); return; }
+    setAdding(true);
+    const res = await fetch('/api/users/osas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: addEmail.trim() }),
+    });
+    const json = await res.json();
+    if (!res.ok) { setAddError(json.error || 'Failed to add user'); }
+    else { setUsers(prev => [...prev, json.user]); setAddEmail(''); setShowAddModal(false); }
+    setAdding(false);
+  };
+
+  return (
+    <div className="mt-10 bg-white rounded-lg shadow-md p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-black">OSAS Users</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowAddModal(true); setAddError(''); setAddEmail(''); }}
+            className="bg-[#014fb3] hover:bg-[#013db3] text-white px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer"
+          >
+            Add OSAS User
+          </button>
+          <button
+            onClick={() => { setEditMode(p => !p); setSelected(new Set()); }}
+            className="bg-[#014fb3] hover:bg-[#013db3] text-white px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer"
+          >
+            {editMode ? 'Exit Edit Mode' : 'Edit Users'}
+          </button>
+          {editMode && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting || selected.size === 0}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete User'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-500 text-sm">Loading...</p>
+      ) : (
+        <table className="min-w-full border border-gray-300 text-sm text-black">
+          <thead>
+            <tr className="bg-gray-50">
+              {editMode && <th className="border border-gray-300 px-3 py-2 w-10" />}
+              <th className="border border-gray-300 px-3 py-2 text-left">Name</th>
+              <th className="border border-gray-300 px-3 py-2 text-left">Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr><td colSpan={editMode ? 3 : 2} className="px-3 py-4 text-center text-gray-400">No OSAS users found.</td></tr>
+            ) : users.map(u => (
+              <tr key={u.id} className="border-b border-gray-200">
+                {editMode && (
+                  <td className="border border-gray-300 px-3 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(u.id)}
+                      onChange={() => toggleSelect(u.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                )}
+                <td className="border border-gray-300 px-3 py-2">{u.Name}</td>
+                <td className="border border-gray-300 px-3 py-2">{u.Email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Add OSAS User Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-black">Add OSAS User</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer">✕</button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">Email Address</label>
+              <input
+                type="email"
+                value={addEmail}
+                onChange={e => setAddEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                placeholder="Enter email address"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#014fb3] outline-none text-black"
+              />
+              {addError && <p className="text-red-600 text-sm mt-1">{addError}</p>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-black hover:bg-gray-100 cursor-pointer">Cancel</button>
+              <button onClick={handleAdd} disabled={adding} className="px-4 py-2 bg-[#014fb3] hover:bg-[#013db3] text-white rounded-md cursor-pointer disabled:opacity-50">
+                {adding ? 'Adding...' : 'Add User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ORG_SLICE_LIMIT = 3;
 
@@ -486,6 +644,8 @@ const OrgsDashboard: FC = () => {
         onClose={() => setShowModal(false)}
         onCreate={handleCreateOrg}
       />
+
+      {role === 'osas' && <OsasUsersSection />}
     </div>
   );
 };
