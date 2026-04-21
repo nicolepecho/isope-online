@@ -13,6 +13,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ orgname
 
   const { orgname } = await params;
 
+  const body = await req.json().catch(() => ({}));
+  const incomingTemplateId: string | null = body?.templateId || null;
+
   const { data: existingRows, error: exErr } = await supabaseAdmin
     .from("org_evaluations")
     .select("id, orgUsername, templateId, active")
@@ -22,24 +25,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ orgname
     .limit(1);
 
   if (exErr) return NextResponse.json({ error: exErr.message }, { status: 500 });
-  if (existingRows && existingRows.length > 0) return NextResponse.json({ evaluation: existingRows[0] });
 
-  const { data: template, error: tErr } = await supabaseAdmin
-    .from("evaluation_templates")
-    .select("id")
-    .eq("active", true)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (existingRows && existingRows.length > 0) {
+    const existing = existingRows[0];
+    if (incomingTemplateId && existing.templateId !== incomingTemplateId) {
+      await supabaseAdmin
+        .from("org_evaluations")
+        .update({ templateId: incomingTemplateId })
+        .eq("id", existing.id);
+      existing.templateId = incomingTemplateId;
+    }
+    return NextResponse.json({ evaluation: existing });
+  }
 
-  if (tErr) return NextResponse.json({ error: tErr.message }, { status: 500 });
-  if (!template) return NextResponse.json({ error: "No active evaluation template found" }, { status: 400 });
+  const templateId = incomingTemplateId;
+  if (!templateId) return NextResponse.json({ error: "No active evaluation template found" }, { status: 400 });
 
   const { data: created, error: cErr } = await supabaseAdmin
     .from("org_evaluations")
     .insert({
       orgUsername: orgname,
-      templateId: template.id,
+      templateId: templateId,
       active: true,
       archived: false,
       school_year: null,

@@ -178,7 +178,11 @@ export default function Page({ params }: { params: Promise<{ orgname: string }> 
 
     const res2 = await fetch(
       `/api/orgs/${encodeURIComponent(orgname)}/evaluations/create`,
-      { method: "POST" }
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId: activeTemplateId }),
+      }
     );
 
     const json2 = await readJsonSafe(res2);
