@@ -539,6 +539,26 @@ const loadRequirementFromSupabase = async () => {
 
 
       if (rawRole === 'osas' || rawRole === 'org' || rawRole === 'adviser') {
+        // Verify the user has access to this specific org
+        if (rawRole !== 'osas') {
+          const { data: orgData } = await supabase
+            .from('orgs')
+            .select('email, adviseremail')
+            .eq('username', orgname)
+            .maybeSingle();
+
+          const emailLower = email.toLowerCase();
+          const allowed =
+            (rawRole === 'org' && (orgData?.email ?? '').toLowerCase() === emailLower) ||
+            (rawRole === 'adviser' && (orgData?.adviseremail ?? '').toLowerCase() === emailLower);
+
+          if (!allowed) {
+            setError('You do not have access to this organization\'s requirements.');
+            setLoading('page', false);
+            return;
+          }
+        }
+
         updateState({ userRole: rawRole as 'osas' | 'org' | 'adviser' });
 
         // kick off initial data loads
@@ -547,7 +567,7 @@ const loadRequirementFromSupabase = async () => {
         loadDueDateFromSupabase();
         loadComments();
       } else {
-        setError(`Invalid role: "${rawRole}"`);
+        setError('You do not have access to this page.');
       }
 
       // page is now ready to render

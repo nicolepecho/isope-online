@@ -27,6 +27,14 @@ const links: LinkType[] = [
 export default function OrgsPage({ org }: OrgsProp) {
   const { data: session, status } = useSession();
   const role = (((session?.user as any)?.role) || '').toString().toLowerCase();
+  const userEmail = ((session?.user as any)?.email ?? '').toString().trim().toLowerCase();
+
+  const hasRequirementsAccess =
+    status !== 'loading' && (
+      role === 'osas' ||
+      (role === 'adviser' && (org.adviseremail ?? '').trim().toLowerCase() === userEmail) ||
+      (role === 'org' && (org.email ?? '').trim().toLowerCase() === userEmail)
+    );
 
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -510,9 +518,8 @@ export default function OrgsPage({ org }: OrgsProp) {
         <ul className="flex flex-wrap sm:flex-nowrap justify-start gap-2 overflow-x-auto">
           {links
             .filter(({ name }) => {
-              // Hide Requirements and Archive for members
-              if (role === 'member' && (name === 'Requirements' || name === 'Archive')) {
-                return false;
+              if (name === 'Requirements' || name === 'Archive') {
+                return hasRequirementsAccess;
               }
               return true;
             })
