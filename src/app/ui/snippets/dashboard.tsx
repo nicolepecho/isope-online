@@ -272,7 +272,7 @@ const CreateOrgModal: FC<{
           <h2 className="text-2xl font-bold text-black">Create Organization</h2>
           <button
             onClick={onClose}
-            className="cursor-pointer text-gray-500 hover:text-gray-700 text-xl"
+            className="cursor-pointer text-red-500 hover:text-red-700 font-bold text-xl"
           >
             ✕
           </button>
