@@ -225,7 +225,7 @@ const NotificationSidebar: FC = () => {
                 memberOrgs.map((org: any) => (
                   <Link
                     key={org.username}
-                    href={`/dashboard/orgs/${org.username}`}
+                    href={`/dashboard/orgs/${org.username}?tab=Members`}
                     className="block w-full text-center bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-4 rounded-md text-sm transition-colors"
                   >
                     {org.name}
