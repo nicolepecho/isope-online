@@ -370,8 +370,8 @@ const OrgsDashboard: FC = () => {
       return;
     }
 
-    setOrgs((prev) => [...prev, data]);
     setShowModal(false);
+    router.refresh();
   };
 
   if (loading) return <div className="p-4 text-black">Loading organizations...</div>;
