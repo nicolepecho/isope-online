@@ -61,11 +61,21 @@ export default function Page({
           return;
         }
 
-        // permission: OSAS can view all; member can only view their own (by name match)
-        // (you can strengthen this later by matching memberId to session email)
-        if (!isOSAS && isMember) {
-          // if your OrgsMembers page already blocks others, this is extra safety
-          // leave as-is for now
+        if (!isOSAS) {
+          const mRes = await fetch(`/api/members/${encodeURIComponent(memberId)}`);
+          if (!mRes.ok) {
+            setError("Access denied.");
+            setLoading(false);
+            return;
+          }
+          const mJson = await readJsonSafe(mRes);
+          const memberName = (mJson?.student_name || "").toString().trim().toLowerCase();
+          const myName = ((session?.user as any)?.name || "").toString().trim().toLowerCase();
+          if (!myName || myName !== memberName) {
+            setError("You do not have permission to view this evaluation.");
+            setLoading(false);
+            return;
+          }
         }
 
         const qRes = await fetch(`/api/org-evaluations/${encodeURIComponent(orgEvaluationId)}/questions`);

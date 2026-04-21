@@ -15,9 +15,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgname:
     .select("id, orgUsername, templateId, school_year, active, archived, created_at")
     .eq("orgUsername", orgname)
     .eq("active", true)
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ evaluation: data || null });
+  return NextResponse.json({ evaluation: data?.[0] || null });
 }

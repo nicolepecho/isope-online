@@ -8,8 +8,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgEvalu
   const token = await getToken({ req: req as any, secret });
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const role = ((token as any)?.role || "").toString().trim().toLowerCase();
   const { orgEvaluationId, memberId: memberIdStr } = await params;
   const memberId = Number(memberIdStr);
+
+  if (role !== "osas") {
+    const { data: member } = await supabaseAdmin
+      .from("member")
+      .select("student_name")
+      .eq("id", memberId)
+      .single();
+    const memberName = (member?.student_name || "").toString().trim().toLowerCase();
+    const tokenName = ((token as any)?.name || "").toString().trim().toLowerCase();
+    if (!tokenName || tokenName !== memberName) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from("org_evaluation_responses")
@@ -32,6 +46,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ orgEvalu
 
   const { orgEvaluationId, memberId: memberIdStr } = await params;
   const memberId = Number(memberIdStr);
+
+  if (role !== "osas") {
+    const { data: member } = await supabaseAdmin
+      .from("member")
+      .select("student_name")
+      .eq("id", memberId)
+      .single();
+    const memberName = (member?.student_name || "").toString().trim().toLowerCase();
+    const tokenName = ((token as any)?.name || "").toString().trim().toLowerCase();
+    if (!tokenName || tokenName !== memberName) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
 
   const body = await req.json();
   const answers = body?.answers ?? {};
