@@ -182,6 +182,7 @@ const CreateOrgModal: FC<{
 
 // Dashboard
 const OrgsDashboard: FC = () => {
+  const router = useRouter();
   const { data: session, status } = useSession();
 
   const [allOrgs, setAllOrgs] = useState<any[]>([]);
