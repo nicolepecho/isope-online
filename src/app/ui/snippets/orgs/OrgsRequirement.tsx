@@ -348,7 +348,7 @@ export default function OrgsRequirement({
         .insert({ id: newId, section: newReqSection.trim(), title: newReqTitle.trim(), active: true });
       if (reqError) throw reqError;
 
-      const { error: statusError } = await supabase
+      const { data: newStatus, error: statusError } = await supabase
         .from('org_requirement_status')
         .insert({
           orgUsername: username,
@@ -360,12 +360,15 @@ export default function OrgsRequirement({
           score: null,
           grade: null,
           active: true,
-        });
+        })
+        .select()
+        .single();
       if (statusError) throw statusError;
 
       const newReq: Requirement = { id: newId, section: newReqSection.trim(), title: newReqTitle.trim(), active: true };
       setRequirements((prev) => [...prev, newReq]);
       setOriginalRequirements((prev) => [...prev, newReq]);
+      if (newStatus) setStatuses((prev) => [...prev, newStatus]);
 
       setShowAddModal(false);
       setNewReqSection('');
