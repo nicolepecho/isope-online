@@ -22,7 +22,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgEvalu
     .from("evaluation_template_questions")
     .select("id, type, text, options, scale, sort_order")
     .eq("templateId", orgEval.templateId)
-    .eq("active", true)
     .order("sort_order", { ascending: true });
 
   if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 });

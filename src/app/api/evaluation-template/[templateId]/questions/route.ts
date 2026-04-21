@@ -28,12 +28,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ template
     }
   }
 
-  const { error: deactivateErr } = await supabaseAdmin
+  const { error: deleteErr } = await supabaseAdmin
     .from("evaluation_template_questions")
-    .update({ active: false })
+    .delete()
     .eq("templateId", templateId);
 
-  if (deactivateErr) return NextResponse.json({ error: deactivateErr.message }, { status: 500 });
+  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
 
   const payload = questions.map((q: any, idx: number) => ({
     templateId,
@@ -42,7 +42,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ template
     options: q.type === "dropdown" || q.type === "checkbox" ? (q.options || []) : null,
     scale: q.type === "likert" ? (q.scale || 5) : null,
     sort_order: typeof q.sort_order === "number" ? q.sort_order : idx,
-    active: true,
   }));
 
   const { error: insErr } = await supabaseAdmin.from("evaluation_template_questions").insert(payload);

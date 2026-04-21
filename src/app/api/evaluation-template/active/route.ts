@@ -21,9 +21,8 @@ export async function GET(req: Request) {
 
   const { data: questions, error: qErr } = await supabaseAdmin
     .from("evaluation_template_questions")
-    .select("id, templateId, type, text, options, scale, sort_order, active")
+    .select("id, templateId, type, text, options, scale, sort_order")
     .eq("templateId", template.id)
-    .eq("active", true)
     .order("sort_order", { ascending: true });
 
   if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 });
