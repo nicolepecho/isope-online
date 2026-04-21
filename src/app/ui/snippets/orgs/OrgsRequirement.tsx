@@ -373,6 +373,7 @@ export default function OrgsRequirement({
       setShowAddModal(false);
       setNewReqSection('');
       setNewReqTitle('');
+      window.location.reload();
     } catch (err: any) {
       console.error('Failed to add requirement:', err.message ?? err);
       alert('Failed to add requirement.');
