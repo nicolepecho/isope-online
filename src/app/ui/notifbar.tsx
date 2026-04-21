@@ -8,19 +8,8 @@ import { BellIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon } from '@heroico
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { fetchAccessibleOrgs } from '@/app/lib/access-control';
 
-interface Notification {
-  id: number;
-  title: string;
-  date: string;
-}
-
 const NotificationSidebar: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 1, title: 'General Assembly', date: '9/17' },
-    { id: 2, title: 'Workshop', date: '10/1' },
-    { id: 3, title: 'Webinar', date: '11/5' }
-  ]);
 
   const { data: session, status } = useSession();
   const [requirements, setRequirements] = useState<any[]>([]);
@@ -113,10 +102,6 @@ const NotificationSidebar: FC = () => {
       }, [session, status]);
 
 
-  const removeNotification = (id: number) => {
-    setNotifications(notifications.filter(notif => notif.id !== id));
-  };
-
   const toggleOrg = (orgName: string) => {
     setExpandedOrgs(prev => {
       const newSet = new Set(prev);
@@ -138,11 +123,6 @@ const NotificationSidebar: FC = () => {
         aria-label="Toggle notifications"
       >
         <BellIcon className="w-6 h-6" />
-        {notifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-            {notifications.length}
-          </span>
-        )}
       </button>
 
       {/* Overlay for mobile */}
@@ -175,35 +155,6 @@ const NotificationSidebar: FC = () => {
           <BellIcon className="w-6 h-6" />
           <h2 className="font-bold text-base sm:text-lg">NOTIFICATIONS</h2>
         </div>
-
-        {/* Notification Items */}
-        <div className="space-y-3 mb-6">
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              className="bg-blue-800 rounded-lg p-3 flex items-center justify-between hover:bg-blue-900 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-red-500 rounded flex items-center justify-center flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">{notif.title}</p>
-                  <p className="text-xs text-blue-200">{notif.date}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => removeNotification(notif.id)}
-                className="text-white hover:text-red-300 transition-colors ml-2 flex-shrink-0 cursor-pointer"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* View All Button */}
-        <button className="bg-yellow-400 text-blue-900 font-bold py-2 px-6 rounded-full hover:bg-yellow-300 transition-colors mb-8 self-start text-sm sm:text-base cursor-pointer">
-          VIEW ALL
-        </button>
 
         {/* To Do Section */}
         <div className="flex-1">

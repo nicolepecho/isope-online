@@ -1,26 +1,25 @@
 'use client';
 import { useEffect, useState, FC } from 'react';
-import { BellIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/app/lib/database';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Orgs } from '@/app/lib/definitions';
 import { fetchAccessibleOrgs } from '@/app/lib/access-control'; 
 
-const OrgCard: FC<{ org: any }> = ({ org }) => {
+const OrgCard: FC<{ org: any; role: string }> = ({ org, role }) => {
   const router = useRouter();
 
-  // Use real progress from org object
   const progress = org.progress ?? 0;
 
-  // Navigate to org dashboard
   const goToOrg = () => router.push(`./dashboard/orgs/${org.username}`);
 
-  // Navigate to dues tab
   const goToDues = (e: React.MouseEvent) => {
     e.stopPropagation();
     router.push(`/dashboard/orgs/${org.username}?tab=Requirements`);
   };
+
+  const showRequirements = role !== 'member';
 
   return (
     <div
@@ -69,24 +68,17 @@ const OrgCard: FC<{ org: any }> = ({ org }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-5 pt-3 grid grid-cols-[1fr_auto] gap-2">
-        {/* Requirements */}
-        <button
-          onClick={goToDues}
-          className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer"
-        >
-          <DocumentIcon className="w-5 h-5" />
-          <span>Requirements</span>
-        </button>
-
-        {/* Notifications */}
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center bg-[#014fb3] hover:bg-[#013db3] text-white p-2 rounded-md transition cursor-pointer"
-        >
-          <BellIcon className="w-5 h-5" />
-        </button>
-      </div>
+      {showRequirements && (
+        <div className="mt-5 pt-3">
+          <button
+            onClick={goToDues}
+            className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer w-full"
+          >
+            <DocumentIcon className="w-5 h-5" />
+            <span>Requirements</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -213,7 +205,7 @@ const OrgsDashboard: FC = () => {
           role === 'org'
             ? session?.user?.email
             : (session?.user as any)?.username || session?.user?.name;
-          if(role=='osas') setRole('osas');
+          setRole(role);
         const fetchedOrgs: Orgs[] = await fetchAccessibleOrgs({
           role,
           name,
@@ -348,7 +340,7 @@ const OrgsDashboard: FC = () => {
             <h2 className="text-xl font-bold text-black mb-4">Active Organizations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
               {filteredActiveOrgs.map((org) => (
-                <OrgCard key={org.username} org={org} />
+                <OrgCard key={org.username} org={org} role={role} />
               ))}
             </div>
           </>
@@ -360,7 +352,7 @@ const OrgsDashboard: FC = () => {
             <h2 className="text-xl font-bold text-black mb-4">Archived Organizations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredArchivedOrgs.map((org) => (
-                <OrgCard key={org.username} org={org} />
+                <OrgCard key={org.username} org={org} role={role} />
               ))}
             </div>
           </>

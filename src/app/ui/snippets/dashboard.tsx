@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, FC } from 'react';
-import { BellIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/app/lib/database';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation"; 
@@ -71,26 +71,17 @@ const OrgCard: FC<{ org: any; role: string }> = ({ org, role }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className={`mt-5 pt-3 gap-2 ${showRequirements ? 'grid grid-cols-[1fr_auto]' : 'flex justify-end'}`}>
-        {/* Requirements */}
-        {showRequirements && (
+      {showRequirements && (
+        <div className="mt-5 pt-3">
           <button
             onClick={goToDues}
-            className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer"
+            className="flex items-center justify-center gap-2 bg-[#014fb3] hover:bg-[#013db3] text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer w-full"
           >
             <DocumentIcon className="w-5 h-5" />
             <span>Requirements</span>
           </button>
-        )}
-
-        {/* Notifications */}
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-center bg-[#014fb3] hover:bg-[#013db3] text-white p-2 rounded-md transition cursor-pointer"
-        >
-          <BellIcon className="w-5 h-5" />
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
