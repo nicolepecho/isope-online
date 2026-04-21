@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import type { QType, Question } from "@/app/lib/evaluationData";
@@ -30,6 +30,8 @@ export default function Page({ params }: { params: Promise<{ orgname: string }> 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedType, setSelectedType] = useState<QType>("input");
 
+  const booted = useRef(false);
+
   const goToMembers = (e: React.MouseEvent) => {
     e.stopPropagation();
     router.push(`/dashboard/orgs/${orgname}?tab=Members`);
@@ -37,14 +39,13 @@ export default function Page({ params }: { params: Promise<{ orgname: string }> 
 
 
   useEffect(() => {
+    if (status === "loading") return;
+    if (booted.current) return;
+    booted.current = true;
+
     const boot = async () => {
       try {
         setError(null);
-
-        if (status === "loading") {
-          setLoading((p) => ({ ...p, page: true }));
-          return;
-        }
 
         if (!session) {
           setError("You must be logged in.");
