@@ -36,6 +36,44 @@ export default function OrgsPage({ org }: OrgsProp) {
       (role === 'org' && (org.email ?? '').trim().toLowerCase() === userEmail)
     );
 
+  const [hasOrgAccess, setHasOrgAccess] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (role === 'osas') { setHasOrgAccess(true); return; }
+
+    if (role === 'org') {
+      setHasOrgAccess((org.email ?? '').trim().toLowerCase() === userEmail);
+      return;
+    }
+
+    if (role === 'adviser') {
+      setHasOrgAccess((org.adviseremail ?? '').trim().toLowerCase() === userEmail);
+      return;
+    }
+
+    if (role === 'member') {
+      const userName = ((session?.user as any)?.name ?? '');
+      supabase
+        .from('member')
+        .select('orgs!inner(username)')
+        .eq('student_name', userName)
+        .eq('orgs.username', org.username)
+        .maybeSingle()
+        .then(({ data }) => {
+          setHasOrgAccess(!!data);
+          // Reset to Overview if somehow landed on a restricted tab
+          setActive(prev =>
+            (prev === 'Requirements' || prev === 'Archive') ? 'Overview' : prev
+          );
+        });
+      return;
+    }
+
+    setHasOrgAccess(false);
+  }, [status, session, role, userEmail]);
+
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
 
@@ -498,6 +536,25 @@ export default function OrgsPage({ org }: OrgsProp) {
     ],
   };
 
+  if (hasOrgAccess === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#014fb3]" />
+      </div>
+    );
+  }
+
+  if (hasOrgAccess === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to view this organization.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="text-black flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 p-4 sm:p-6 rounded mx-auto max-w-xl">
@@ -543,7 +600,9 @@ export default function OrgsPage({ org }: OrgsProp) {
       </nav>
 
       <div className="mt-6 w-full bg-gray-50 p-4 sm:p-6 rounded-lg min-h-[400px]">
-        {content[active] ? content[active] : <p className="text-gray-500">No content available.</p>}
+        {(active === 'Requirements' || active === 'Archive') && !hasRequirementsAccess
+          ? <p className="text-gray-500">No content available.</p>
+          : content[active] ?? <p className="text-gray-500">No content available.</p>}
       </div>
     </div>
   );
