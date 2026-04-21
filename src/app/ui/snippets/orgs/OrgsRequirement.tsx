@@ -137,9 +137,6 @@ export default function OrgsRequirement({
   }
 
   try {
-    const currentYear = new Date().getFullYear();
-    console.log('[Archive] Current year:', currentYear);
-
     // 1. Fetch current active statuses
     console.log('[Archive][1] Fetching active requirement statuses…');
 
@@ -164,6 +161,11 @@ export default function OrgsRequirement({
       alert('No active requirement statuses to archive.');
       return;
     }
+
+    // Use the year stored on the active rows so it increments each cycle.
+    // Falls back to calendar year only if year is null (very first archive).
+    const currentYear: number = currentStatuses[0]?.year ?? new Date().getFullYear();
+    console.log('[Archive] Archive year:', currentYear);
 
     // 2. Prepare duplicated rows
     console.log('[Archive][2] Preparing duplicated statuses…');
