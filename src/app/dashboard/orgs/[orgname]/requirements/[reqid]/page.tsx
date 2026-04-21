@@ -537,41 +537,40 @@ const loadRequirementFromSupabase = async () => {
 
     checkSupabaseAuth();
 
+      const initPage = async () => {
+        if (rawRole === 'osas' || rawRole === 'org' || rawRole === 'adviser') {
+          if (rawRole !== 'osas') {
+            const { data: orgData } = await supabase
+              .from('orgs')
+              .select('email, adviseremail')
+              .eq('username', orgname)
+              .maybeSingle();
 
-      if (rawRole === 'osas' || rawRole === 'org' || rawRole === 'adviser') {
-        // Verify the user has access to this specific org
-        if (rawRole !== 'osas') {
-          const { data: orgData } = await supabase
-            .from('orgs')
-            .select('email, adviseremail')
-            .eq('username', orgname)
-            .maybeSingle();
+            const emailLower = email.toLowerCase();
+            const allowed =
+              (rawRole === 'org' && (orgData?.email ?? '').toLowerCase() === emailLower) ||
+              (rawRole === 'adviser' && (orgData?.adviseremail ?? '').toLowerCase() === emailLower);
 
-          const emailLower = email.toLowerCase();
-          const allowed =
-            (rawRole === 'org' && (orgData?.email ?? '').toLowerCase() === emailLower) ||
-            (rawRole === 'adviser' && (orgData?.adviseremail ?? '').toLowerCase() === emailLower);
-
-          if (!allowed) {
-            setError('You do not have access to this organization\'s requirements.');
-            setLoading('page', false);
-            return;
+            if (!allowed) {
+              setError('You do not have access to this organization\'s requirements.');
+              setLoading('page', false);
+              return;
+            }
           }
+
+          updateState({ userRole: rawRole as 'osas' | 'org' | 'adviser' });
+          loadRequirementFromSupabase();
+          loadGradeFromSupabase();
+          loadDueDateFromSupabase();
+          loadComments();
+        } else {
+          setError('You do not have access to this page.');
         }
 
-        updateState({ userRole: rawRole as 'osas' | 'org' | 'adviser' });
+        setLoading('page', false);
+      };
 
-        // kick off initial data loads
-        loadRequirementFromSupabase();
-        loadGradeFromSupabase();
-        loadDueDateFromSupabase();
-        loadComments();
-      } else {
-        setError('You do not have access to this page.');
-      }
-
-      // page is now ready to render
-      setLoading('page', false);
+      initPage();
     }
   }, [status, session, statusId]);
 
