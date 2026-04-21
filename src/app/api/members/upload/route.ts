@@ -5,9 +5,14 @@ import { supabase } from "@/app/lib/database";
 export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
+  const orgname = formData.get("orgname") as string | null;
 
   if (!file) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  }
+
+  if (!orgname) {
+    return NextResponse.json({ error: "Missing org context" }, { status: 400 });
   }
 
   // Read file into buffer
@@ -30,13 +35,13 @@ export async function POST(req: Request) {
    */
   const members = rows.map((row: any) => ({
     student_name: String(row.student_name).trim(),
-    organizations: String(row.organizations).trim(),
+    organizations: orgname,
     school_year: String(row.school_year).trim(),
   }));
   console.log(rows);
   // Filter out invalid rows
   const validMembers = members.filter(
-    (m) => m.student_name && m.organizations.toLowerCase() && m.school_year
+    (m) => m.student_name && m.school_year
   );
 
   if (validMembers.length === 0) {

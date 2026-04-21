@@ -127,7 +127,7 @@ export default function OrgsMembers({ username }: { username: string }) {
           
         )}
         {isOSAS && (
-          <UploadMembersModal />
+          <UploadMembersModal orgname={username} />
         )}
       </div>
     </div>

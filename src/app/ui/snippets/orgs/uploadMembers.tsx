@@ -3,7 +3,7 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 
-export default function UploadMembersModal() {
+export default function UploadMembersModal({ orgname }: { orgname: string }) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,6 +17,7 @@ export default function UploadMembersModal() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("orgname", orgname);
 
     const res = await fetch("/api/members/upload", {
       method: "POST",
@@ -35,7 +36,7 @@ export default function UploadMembersModal() {
   }
   const downloadTemplate = () => {
     const worksheet = XLSX.utils.aoa_to_sheet([
-      ["student_name", "organizations", "school_year"],
+      ["student_name", "school_year"],
     ]);
 
     const workbook = XLSX.utils.book_new();
