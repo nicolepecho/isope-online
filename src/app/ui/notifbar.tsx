@@ -248,6 +248,15 @@ const NotificationSidebar: FC = () => {
             </>
           )}
         </div>
+
+        {/* Footer */}
+        <div className="mt-6 pt-4 border-t border-blue-400 text-center text-xs text-white leading-relaxed">
+          <p className="font-semibold mb-1">Created by:</p>
+          <p>Inserto, Sean Rovic L.</p>
+          <p>Lope, Hans Niegel S.</p>
+          <p>Loquillano, Guillermo Luis S.</p>
+          <p>Pecho, Nicole O.</p>
+        </div>
       </div>
     </>
   );
