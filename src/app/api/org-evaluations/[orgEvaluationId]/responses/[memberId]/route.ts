@@ -72,20 +72,33 @@ export async function PUT(req: Request, { params }: { params: Promise<{ orgEvalu
 
   if (eErr || !orgEval) return NextResponse.json({ error: "Org evaluation not found" }, { status: 404 });
 
-  const payload = {
-    orgEvaluationId,
-    orgUsername: orgEval.orgUsername,
-    memberId,
-    respondentEmail: email || null,
-    answers,
-    submitted,
-  };
-
-  const { error } = await supabaseAdmin
+  const { data: existing } = await supabaseAdmin
     .from("org_evaluation_responses")
-    .upsert(payload, { onConflict: "orgEvaluationId,memberId" });
+    .select("id")
+    .eq("orgEvaluationId", orgEvaluationId)
+    .eq("memberId", memberId)
+    .limit(1)
+    .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (existing) {
+    const { error } = await supabaseAdmin
+      .from("org_evaluation_responses")
+      .update({ answers, submitted, updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  } else {
+    const { error } = await supabaseAdmin
+      .from("org_evaluation_responses")
+      .insert({
+        orgEvaluationId,
+        orgUsername: orgEval.orgUsername,
+        memberId,
+        respondentEmail: email || null,
+        answers,
+        submitted,
+      });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }
