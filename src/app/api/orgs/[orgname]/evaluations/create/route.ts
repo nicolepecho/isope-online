@@ -13,15 +13,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ orgname
 
   const { orgname } = await params;
 
-  const { data: existing, error: exErr } = await supabaseAdmin
+  const { data: existingRows, error: exErr } = await supabaseAdmin
     .from("org_evaluations")
     .select("id, orgUsername, templateId, active")
     .eq("orgUsername", orgname)
     .eq("active", true)
-    .maybeSingle();
+    .order("id", { ascending: false })
+    .limit(1);
 
   if (exErr) return NextResponse.json({ error: exErr.message }, { status: 500 });
-  if (existing) return NextResponse.json({ evaluation: existing });
+  if (existingRows && existingRows.length > 0) return NextResponse.json({ evaluation: existingRows[0] });
 
   const { data: template, error: tErr } = await supabaseAdmin
     .from("evaluation_templates")
