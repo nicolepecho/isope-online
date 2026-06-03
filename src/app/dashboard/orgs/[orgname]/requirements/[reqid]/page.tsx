@@ -95,6 +95,8 @@ export default function RequirementPage({ params }: { params: Promise<{ orgname:
     }[],
   });
 
+  const [accessDenied, setAccessDenied] = useState(false);
+
   const requirementName = state.requirement?.title || reqid;
 
   const formattedDueDate = state.dueDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) || 'TBD';
@@ -552,7 +554,7 @@ const loadRequirementFromSupabase = async () => {
               (rawRole === 'adviser' && (orgData?.adviseremail ?? '').toLowerCase() === emailLower);
 
             if (!allowed) {
-              setError('You do not have access to this organization\'s requirements.');
+              setAccessDenied(true);
               setLoading('page', false);
               return;
             }
@@ -564,7 +566,7 @@ const loadRequirementFromSupabase = async () => {
           loadDueDateFromSupabase();
           loadComments();
         } else {
-          setError('You do not have access to this page.');
+          setAccessDenied(true);
         }
 
         setLoading('page', false);
@@ -660,6 +662,17 @@ const loadRequirementFromSupabase = async () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to view this organization's requirements.</p>
         </div>
       </div>
     );

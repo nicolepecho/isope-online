@@ -40,6 +40,7 @@ export default function Page({
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<AnswersMap>({});
@@ -64,7 +65,7 @@ export default function Page({
         if (!isOSAS) {
           const mRes = await fetch(`/api/members/${encodeURIComponent(memberId)}`);
           if (!mRes.ok) {
-            setError("Access denied.");
+            setAccessDenied(true);
             setLoading(false);
             return;
           }
@@ -72,7 +73,7 @@ export default function Page({
           const memberName = (mJson?.student_name || "").toString().trim().toLowerCase();
           const myName = ((session?.user as any)?.name || "").toString().trim().toLowerCase();
           if (!myName || myName !== memberName) {
-            setError("You do not have permission to view this evaluation.");
+            setAccessDenied(true);
             setLoading(false);
             return;
           }
@@ -178,6 +179,17 @@ const missingCount = validateRequiredAnswers().length;
     return (
       <div className="min-h-screen p-6 bg-gray-50 flex items-center justify-center">
         <p className="text-gray-900">Loading...</p>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to view this evaluation.</p>
+        </div>
       </div>
     );
   }
