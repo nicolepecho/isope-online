@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { supabase } from "@/app/lib/database";
+import { getToken } from "next-auth/jwt";
+
+const secret = process.env.NEXTAUTH_SECRET;
 
 export async function POST(req: Request) {
+  // Identity check — must be logged in
+  const token = await getToken({ req: req as any, secret });
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Role check — only OSAS can upload members
+  const role = ((token as any)?.role || "").toString().trim().toLowerCase();
+  if (role !== "osas") {
+    return NextResponse.json({ error: "Access denied. Only OSAS can upload members." }, { status: 403 });
+  }
+
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const orgname = formData.get("orgname") as string | null;

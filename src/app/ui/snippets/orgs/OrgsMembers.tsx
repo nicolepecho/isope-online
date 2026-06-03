@@ -27,6 +27,7 @@ export default function OrgsMembers({ username }: { username: string }) {
   const [editMembersMode, setEditMembersMode] = useState(false);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchmembers = async () => {
@@ -87,8 +88,26 @@ export default function OrgsMembers({ username }: { username: string }) {
     }
   };
 
+  const filteredMembers = members.filter((m) =>
+    !search.trim() || (m.student_name || '').toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="relative min-h-[400px]">
+
+      {/* Search bar — top right above the table */}
+      <div className="flex justify-end mb-3">
+        <input
+          type="text"
+          placeholder="Search member"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0
+                     bg-white px-4 py-2 rounded-md border border-gray-300 text-black
+                     focus:bg-white focus:ring-2 focus:ring-[#014fb3] outline-none"
+        />
+      </div>
+
       <div className="overflow-x-auto" key="requirements-1">
         <table className="min-w-full border border-gray-300 bg-white text-black text-xs sm:text-sm md:text-base">
           <thead>
@@ -102,7 +121,17 @@ export default function OrgsMembers({ username }: { username: string }) {
           </thead>
 
           <tbody>
-            {members.map((member) => {
+            {filteredMembers.length === 0 && (
+              <tr>
+                <td
+                  colSpan={editMembersMode && isOSAS ? 3 : 2}
+                  className="border border-gray-300 px-3 py-6 text-center text-gray-400"
+                >
+                  {search.trim() ? `No members found for "${search}"` : 'No members yet.'}
+                </td>
+              </tr>
+            )}
+            {filteredMembers.map((member) => {
               const memberName = (member?.student_name || "").toString().trim().toLowerCase();
               const canView =
                 isOSAS || (isMember && sessionName && memberName && sessionName === memberName);
