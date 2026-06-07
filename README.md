@@ -53,7 +53,7 @@ npm install
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_SUPABASE_SERVICE_KEY=your_supabase_service_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
 NEXTAUTH_SECRET=your_nextauth_secret
 AUTH_GOOGLE_ID=your_google_client_id
 AUTH_GOOGLE_SECRET=your_google_client_secret
