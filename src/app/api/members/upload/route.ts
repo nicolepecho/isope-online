@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { supabase } from "@/app/lib/database";
+import { supabaseAdmin } from "@/app/lib/database";
 import { getToken } from "next-auth/jwt";
 
 const secret = process.env.NEXTAUTH_SECRET;
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   // Fetch existing member names for this org to avoid duplicates
-  const { data: existing, error: fetchError } = await supabase
+  const { data: existing, error: fetchError } = await supabaseAdmin
     .from("member")
     .select("student_name")
     .eq("organizations", orgname);
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ count: 0, skipped, message: "All members already exist" });
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("member")
     .insert(newMembers);
 

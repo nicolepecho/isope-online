@@ -8,6 +8,9 @@ export async function POST(req: Request) {
   const token = await getToken({ req: req as any, secret });
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const role = ((token as any)?.role || "").toString().trim().toLowerCase();
+  if (role !== "osas") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const { data: existing } = await supabaseAdmin
     .from("evaluation_templates")
     .select("id")
