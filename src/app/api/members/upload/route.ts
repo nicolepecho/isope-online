@@ -53,7 +53,6 @@ export async function POST(req: Request) {
     organizations: orgname,
     school_year: String(row.school_year).trim(),
   }));
-  console.log(rows);
   // Filter out invalid rows
   const validMembers = members.filter(
     (m) => m.student_name && m.school_year
