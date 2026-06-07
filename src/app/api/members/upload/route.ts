@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const existingNames = new Set(
-    (existing || []).map((m) => m.student_name.trim().toLowerCase())
+    (existing || []).map((m: { student_name: string }) => m.student_name.trim().toLowerCase())
   );
 
   const newMembers = validMembers.filter(
