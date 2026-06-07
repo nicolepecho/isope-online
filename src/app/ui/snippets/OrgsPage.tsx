@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { supabase, supabaseAdmin } from '@/app/lib/database';
+import { supabase } from '@/app/lib/database';
 import { useSearchParams } from "next/navigation";
 import OrgsRequirementArchive from "./orgs/OrgsRequirementsArchive";
 import OrgsRequirement from "./orgs/OrgsRequirement";
@@ -112,13 +112,11 @@ export default function OrgsPage({ org }: OrgsProp) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.match('image/(jpeg|jpg|png)')) {
       alert('Please select a JPG or PNG image');
       return;
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be less than 5MB');
       return;
@@ -127,60 +125,27 @@ export default function OrgsPage({ org }: OrgsProp) {
     setUploading(true);
 
     try {
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${org.username}-${Date.now()}.${fileExt}`;
-      const filePath = `org-logos/${fileName}`;
+      const formData = new FormData();
+      formData.append('orgname', org.username);
+      formData.append('file', file);
 
-      // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabaseAdmin
-        .storage
-        .from('orglogos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      const res = await fetch('/api/orgs/logo', {
+        method: 'POST',
+        body: formData,
+      });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        alert('Failed to upload image: ' + uploadError.message);
-        setUploading(false);
-        return;
-      }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to upload logo');
 
-      // Get public URL
-      const { data: urlData } = supabaseAdmin
-        .storage
-        .from('orglogos')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update org table with new avatar URL
-      const { error: updateError } = await supabase
-        .from('orgs')
-        .update({ avatar: publicUrl })
-        .eq('username', org.username);
-
-      if (updateError) {
-        console.error('Database update error:', updateError);
-        alert('Failed to update organization avatar');
-        setUploading(false);
-        return;
-      }
-
-      // Update local org object
-      org.avatar = publicUrl;
+      org.avatar = json.publicUrl;
       alert('Logo updated successfully!');
-      
-      // Reset file input
+
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected error:', error);
-      alert('An unexpected error occurred');
+      alert(error?.message || 'An unexpected error occurred');
     }
 
     setUploading(false);

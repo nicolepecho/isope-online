@@ -227,7 +227,7 @@ const missingCount = validateRequiredAnswers().length;
               <button
                 onClick={submitEvaluation}
                 disabled={missingCount > 0}
-                className="px-4 py-2 bg-bg-[#014fb3] bg-blue-300 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded cursor-pointer"
+                className="px-4 py-2 bg-[#014fb3] hover:bg-[#013db3] disabled:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded cursor-pointer"
               >
                 Submit
               </button>

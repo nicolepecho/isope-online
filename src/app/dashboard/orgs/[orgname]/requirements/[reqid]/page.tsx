@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { formatName } from '@/app/lib/assessments';
-import { supabaseAdmin, supabase } from '@/app/lib/database';
+import { supabase } from '@/app/lib/database';
 import { useSession } from "next-auth/react";
 import { InstructionsBlock } from '@/app/ui/snippets/submission/instruction';
 import { SubmissionInfo } from '@/app/ui/snippets/submission/submission-info';
@@ -296,31 +296,27 @@ const loadRequirementFromSupabase = async () => {
 
       for (const file of Array.from(files)) {
         const ext = (file.name.split('.').pop() || '').toLowerCase();
-
         if (!ext || !allowed.includes(ext)) {
           setError(`Invalid file type: "${file.name}". Allowed types: ${allowed.join(', ')}`);
           return;
         }
       }
 
+      const formData = new FormData();
+      formData.append('orgname', orgname);
+      formData.append('reqid', reqid);
+      formData.append('statusId', statusId);
       for (const file of Array.from(files)) {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filePath = `${orgname}/${reqid}/${crypto.randomUUID()}_${safeName}`;
-
-
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from('requirement-pdfs')
-          .upload(filePath, file, {
-            contentType: file.type,
-          });
-
-        if (uploadError) throw uploadError;
+        formData.append('files', file);
       }
 
-      await supabase
-        .from('org_requirement_status')
-        .update({ submitted: true })
-        .eq('id', statusId);
+      const res = await fetch('/api/requirements/pdfs', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to upload files');
 
       updateState({ hasSubmitted: true });
       loadRequirementPdfs();

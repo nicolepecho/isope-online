@@ -124,6 +124,59 @@ export async function GET(req: Request) {
   }
 }
 
+export async function POST(req: Request) {
+  try {
+    const token = await getToken({ req: req as any, secret });
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const role = ((token as any)?.role || '').toString().trim().toLowerCase();
+    const email = ((token as any)?.email || '').toString().trim().toLowerCase();
+
+    // Only the org account that owns the requirement can upload
+    if (role !== 'org') {
+      return NextResponse.json({ error: 'Only org accounts can upload PDFs' }, { status: 403 });
+    }
+
+    const formData = await req.formData();
+    const orgname = formData.get('orgname') as string;
+    const reqid = formData.get('reqid') as string;
+    const statusId = formData.get('statusId') as string;
+    const files = formData.getAll('files') as File[];
+
+    if (!orgname || !reqid || !statusId || files.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const allowed = await checkOrgAccess(role, email, orgname);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    for (const file of files) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${orgname}/${reqid}/${crypto.randomUUID()}_${safeName}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('requirement-pdfs')
+        .upload(filePath, buffer, { contentType: file.type });
+
+      if (uploadError) throw uploadError;
+    }
+
+    const { error: dbError } = await supabaseAdmin
+      .from('org_requirement_status')
+      .update({ submitted: true })
+      .eq('id', statusId);
+
+    if (dbError) throw dbError;
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Failed to upload files' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     // Identity check — must be logged in

@@ -6,10 +6,15 @@ import { Orgs } from "./definitions";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY!
-)
+// supabaseAdmin uses the service role key which is only available server-side.
+// The typeof window check prevents this from throwing when client components
+// import database.ts — the browser receives null and API routes get the real client.
+export const supabaseAdmin = typeof window === 'undefined'
+  ? createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!
+    )
+  : (null as any);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

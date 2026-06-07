@@ -28,10 +28,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ template
     }
   }
 
+  // Soft-delete existing active questions — preserves answer references in submitted responses
   const { error: deleteErr } = await supabaseAdmin
     .from("evaluation_template_questions")
-    .delete()
-    .eq("templateId", templateId);
+    .update({ active: false })
+    .eq("templateId", templateId)
+    .eq("active", true);
 
   if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
 
