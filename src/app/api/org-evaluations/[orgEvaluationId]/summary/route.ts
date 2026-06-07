@@ -57,15 +57,32 @@ export async function GET(
 
   if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 });
 
+  type QuestionRow = {
+    id: string;
+    type: string;
+    text: string;
+    options: string[] | null;
+    scale: number | null;
+    sort_order: number;
+  };
+
+  type ResponseRow = {
+    answers: Record<string, unknown> | null;
+    submitted: boolean | null;
+    memberId: string | null;
+  };
+
+  const typedResponses = allResponses as ResponseRow[];
+
   // Compute per-question summary
-  const summary = (questions || []).map((q) => {
+  const summary = (questions || []).map((q: QuestionRow) => {
     // Collect each member's answer for this question (skip missing/null/empty)
-    const questionAnswers = allResponses
-      .map((r) => {
-        const ans = r.answers as Record<string, any> | null;
+    const questionAnswers = typedResponses
+      .map((r: ResponseRow) => {
+        const ans = r.answers as Record<string, unknown> | null;
         return ans ? ans[q.id] : undefined;
       })
-      .filter((a) => a !== undefined && a !== null && a !== "");
+      .filter((a: unknown) => a !== undefined && a !== null && a !== "");
 
     const base = {
       id: q.id,
@@ -78,7 +95,7 @@ export async function GET(
     if (q.type === "input") {
       return {
         ...base,
-        responses: questionAnswers.map((a) => String(a)),
+        responses: questionAnswers.map((a: unknown) => String(a)),
       };
     }
 
@@ -106,11 +123,11 @@ export async function GET(
     if (q.type === "likert") {
       const scale = (q.scale as number) ?? 5;
       const nums = questionAnswers
-        .map((a) => Number(a))
-        .filter((n) => Number.isFinite(n) && n >= 1 && n <= scale);
+        .map((a: unknown) => Number(a))
+        .filter((n: number) => Number.isFinite(n) && n >= 1 && n <= scale);
       const average =
         nums.length > 0
-          ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100
+          ? Math.round((nums.reduce((a: number, b: number) => a + b, 0) / nums.length) * 100) / 100
           : null;
       const distribution: Record<string, number> = {};
       for (const n of nums) {

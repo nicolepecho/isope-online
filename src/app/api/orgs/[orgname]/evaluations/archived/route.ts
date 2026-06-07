@@ -52,9 +52,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgname:
   if (respErr) return NextResponse.json({ error: respErr.message }, { status: 500 });
 
   // Map submission status by memberId
-  const responseMap = new Map((responses || []).map((r) => [r.memberId, r.submitted]));
+  const responseMap = new Map(
+    (responses || []).map((r: { memberId: string | null; submitted: boolean | null }) => [r.memberId, r.submitted])
+  );
 
-  const memberList = (members || []).map((m) => ({
+  const memberList = (members || []).map((m: { id: string; student_name: string | null }) => ({
     id: m.id,
     student_name: m.student_name,
     submitted: responseMap.get(m.id) ?? false,
