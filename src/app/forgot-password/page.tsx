@@ -24,7 +24,6 @@ export default function ForgotPasswordPage() {
       });
 
       const responseText = await response.text();
-      console.log("Forgot-password response:", response.status, responseText);
       if (!response.ok) {
         throw new Error(responseText || "Failed to send reset email");
       }

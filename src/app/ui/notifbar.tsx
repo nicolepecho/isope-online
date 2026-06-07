@@ -64,13 +64,7 @@ const NotificationSidebar: FC = () => {
       if (role === 'adviser') {
         query = query
           .eq('submitted', true)
-          .eq('graded', false)
           .eq('approved', false)
-          .in('orgUsername', accessibleUsernames);
-      } else if (role === 'member') {
-        query = query
-          .eq('submitted', false)
-          .eq('graded', false)
           .in('orgUsername', accessibleUsernames);
       } else if (role === 'osas') {
         query = query
@@ -79,13 +73,12 @@ const NotificationSidebar: FC = () => {
           .eq('approved', true);
       } else {
         query = query
-          .eq('graded', false)
+          .eq('submitted', false)
           .in('orgUsername', accessibleUsernames);
       }
 
 
       const { data, error } = await query;
-      console.log('TO DO role:', role);
 
 
 

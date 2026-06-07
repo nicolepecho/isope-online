@@ -526,14 +526,6 @@ const loadRequirementFromSupabase = async () => {
 
       updateState({ currentUserEmail: email });
 
-      const checkSupabaseAuth = async () => {
-      const { data, error } = await supabase.auth.getSession();
-
-      console.log('SUPABASE SESSION:', data?.session);
-      if (error) console.error('Supabase auth error:', error);
-    };
-
-    checkSupabaseAuth();
 
       const initPage = async () => {
         if (rawRole === 'osas' || rawRole === 'org' || rawRole === 'adviser') {
