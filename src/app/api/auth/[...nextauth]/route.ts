@@ -134,7 +134,7 @@ const handler = NextAuth({
         // First, check if email exists in orgs table
         const { data: orgData } = await supabase
           .from("orgs")
-          .select("id")
+          .select("username")
           .eq("email", email)
           .maybeSingle();
 
@@ -147,7 +147,7 @@ const handler = NextAuth({
         // Check if email is an adviser
         const { data: adviserData } = await supabase
           .from("orgs")
-          .select("id")
+          .select("username")
           .eq("adviseremail", email)
           .maybeSingle();
 

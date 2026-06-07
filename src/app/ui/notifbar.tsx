@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FC, useEffect, useState } from 'react';
 import { useSession } from "next-auth/react";
 import { supabase } from '@/app/lib/database';
-import { BellIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { fetchAccessibleOrgs } from '@/app/lib/access-control';
 
@@ -112,10 +112,10 @@ const NotificationSidebar: FC = () => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 z-50 lg:hidden bg- text-white p-3 rounded-full shadow-lg hover:bg-blue-800 transition-colors"
-        aria-label="Toggle notifications"
+        className="fixed top-4 right-4 z-50 lg:hidden bg-[#014fb3] text-white p-3 rounded-full shadow-lg hover:bg-blue-800 transition-colors"
+        aria-label="Toggle to do"
       >
-        <BellIcon className="w-6 h-6" />
+        <CheckCircleIcon className="w-6 h-6 text-green-400" />
       </button>
 
       {/* Overlay for mobile */}
@@ -138,19 +138,13 @@ const NotificationSidebar: FC = () => {
         <button
           onClick={() => setIsOpen(false)}
           className="lg:hidden absolute top-4 right-4 text-white hover:text-red-300 transition-colors cursor-pointer"
-          aria-label="Close notifications"
+          aria-label="Close"
         >
           <XMarkIcon className="w-6 h-6" />
         </button>
 
-        {/* Notifications Header */}
-        <div className="flex items-center gap-2 mb-6 mt-8 lg:mt-0">
-          <BellIcon className="w-6 h-6" />
-          <h2 className="font-bold text-base sm:text-lg">NOTIFICATIONS</h2>
-        </div>
-
         {/* To Do Section */}
-        <div className="flex-1">
+        <div className="flex-1 mt-8 lg:mt-0">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircleIcon className="w-6 h-6 text-green-500 flex-shrink-0" />
             <h3 className="font-bold text-base sm:text-lg">TO DO</h3>
