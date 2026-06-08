@@ -227,6 +227,14 @@ export default function OrgsRequirement({
 
       if (error) throw error;
 
+      // Sync local state so the table reflects graded status immediately
+      setStatuses((prev) =>
+        prev.map((s) => ({
+          ...s,
+          graded: typeof s.grade === 'number',
+        }))
+      );
+
       alert('Scores saved successfully.');
       setEditMode(false);
     } catch (err: any) {
