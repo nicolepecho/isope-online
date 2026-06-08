@@ -6,13 +6,6 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/app/lib/database';
 import { useSession } from 'next-auth/react';
 
-type Requirement = {
-  id: string;
-  section: string;
-  title: string;
-  active: boolean;
-};
-
 type OrgRequirementStatus = {
   id: string;
   orgUsername: string;
@@ -25,6 +18,12 @@ type OrgRequirementStatus = {
   grade: number | null;
   year: number | null;
   active: boolean;
+  requirements: {
+    id: string;
+    section: string;
+    title: string;
+    active: boolean;
+  } | null;
 };
 
 type EvalArchiveMember = {
@@ -58,7 +57,6 @@ export default function OrgsRequirementArchive({ username }: { username: string 
   const role = ((session?.user as any)?.role || '').toString().trim().toLowerCase();
   const isOSAS = role === 'osas';
 
-  const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [statuses, setStatuses] = useState<OrgRequirementStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState<string>('2025');
@@ -102,21 +100,8 @@ export default function OrgsRequirementArchive({ username }: { username: string 
         if (uniqueYears.length > 0) {
           setYear(uniqueYears[0]);
         }
-
-        // Fetch requirements (static)
-        const { data: reqData, error: reqError } = await supabase
-          .from('requirements')
-          .select('*')
-          .eq('active', true)
-          .order('section', { ascending: true })
-          .order('id', { ascending: true });
-
-        if (reqError) throw reqError;
-
-        setRequirements(reqData || []);
       } catch (err: any) {
         console.error(err);
-        setRequirements([]);
         setYears([]);
       } finally {
         setLoading(false);
@@ -133,10 +118,10 @@ export default function OrgsRequirementArchive({ username }: { username: string 
       try {
         const { data, error } = await supabase
           .from('org_requirement_status')
-          .select('*')
+          .select('*, requirements(*)')
           .eq('year', year)
           .eq('orgUsername', username)
-          .eq('active',false);
+          .eq('active', false);
 
         if (error) throw error;
 
@@ -184,21 +169,17 @@ export default function OrgsRequirementArchive({ username }: { username: string 
     fetchEvalArchive();
   }, [year, username, isOSAS]);
 
-  const getStatus = (reqId: string) =>
-    statuses.find((s) => s.requirementId === reqId);
-
-  const groupedRequirements: Record<string, Requirement[]> = requirements.reduce(
-    (acc, req) => {
-      if (!acc[req.section]) acc[req.section] = [];
-      acc[req.section].push(req);
+  const groupedStatuses: Record<string, OrgRequirementStatus[]> = statuses.reduce(
+    (acc, status) => {
+      const section = status.requirements?.section || 'Unknown';
+      if (!acc[section]) acc[section] = [];
+      acc[section].push(status);
       return acc;
     },
-    {} as Record<string, Requirement[]>
+    {} as Record<string, OrgRequirementStatus[]>
   );
 
   if (loading) return <div className="p-4 text-black">Loading requirements...</div>;
-
-  if (requirements.length === 0) return <div className="p-4 text-black">No requirements found.</div>;
 
   return (
     
@@ -236,46 +217,43 @@ export default function OrgsRequirementArchive({ username }: { username: string 
           </tr>
         </thead>
         <tbody>
-          {Object.entries(groupedRequirements).map(([section, reqs]) => (
-            <React.Fragment key={section}>
-              <tr className="bg-gray-200">
-                <td colSpan={7} className="px-3 py-2 font-bold text-black">{section}</td>
-              </tr>
-              {reqs.map((req) => {
-                const status = getStatus(req.id);
-                return (
-                  <tr key={req.id} className="border-b border-gray-200">
-                    <td className="border px-3 py-2">{req.title}</td>
+          {statuses.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-3 py-6 text-center text-gray-400">
+                No archived requirements for this year.
+              </td>
+            </tr>
+          ) : (
+            Object.entries(groupedStatuses).map(([section, sectionStatuses]) => (
+              <React.Fragment key={section}>
+                <tr className="bg-gray-200">
+                  <td colSpan={7} className="px-3 py-2 font-bold text-black">{section}</td>
+                </tr>
+                {sectionStatuses.map((status) => (
+                  <tr key={status.id} className="border-b border-gray-200">
+                    <td className="border px-3 py-2">{status.requirements?.title || 'Unknown Requirement'}</td>
                     <td className="border px-3 py-2 text-center">
-                        {status?.id ? (
-                          <Link
-                            href={{
-                              pathname: `/dashboard/orgs/${username}/requirements/${req.id}`,
-                              query: { statusId: status.id, year },
-                            }}
-                            className="text-blue-500 hover:underline flex flex-col items-center"
-                          >
-                            <DocumentTextIcon className="w-6 h-6 mb-1" />
-                            <span>View</span>
-                          </Link>
-                        ) : (
-                          <div className="text-gray-400 flex flex-col items-center cursor-not-allowed opacity-60">
-                            <DocumentTextIcon className="w-6 h-6 mb-1" />
-                            <span>No Data</span>
-                          </div>
-                        )}
-                      </td>
-
-                    <td className="border px-3 py-2">{status?.start ? new Date(status.start).toLocaleDateString() : '-'}</td>
-                    <td className="border px-3 py-2">{status?.due ? new Date(status.due).toLocaleDateString() : '-'}</td>
-                    <td className="border px-3 py-2">{status?.submitted ? '✅' : '❌'}</td>
-                    <td className="border px-3 py-2">{status?.graded ? '✅' : '❌'}</td>
-                    <td className="border px-3 py-2">{status?.graded ? status.grade : '-'}</td>
+                      <Link
+                        href={{
+                          pathname: `/dashboard/orgs/${username}/requirements/${status.requirementId}`,
+                          query: { statusId: status.id, year },
+                        }}
+                        className="text-blue-500 hover:underline flex flex-col items-center"
+                      >
+                        <DocumentTextIcon className="w-6 h-6 mb-1" />
+                        <span>View</span>
+                      </Link>
+                    </td>
+                    <td className="border px-3 py-2">{status.start ? new Date(status.start).toLocaleDateString() : '-'}</td>
+                    <td className="border px-3 py-2">{status.due ? new Date(status.due).toLocaleDateString() : '-'}</td>
+                    <td className="border px-3 py-2">{status.submitted ? '✅' : '❌'}</td>
+                    <td className="border px-3 py-2">{status.graded ? '✅' : '❌'}</td>
+                    <td className="border px-3 py-2">{status.graded ? status.grade : '-'}</td>
                   </tr>
-                );
-              })}
-            </React.Fragment>
-          ))}
+                ))}
+              </React.Fragment>
+            ))
+          )}
         </tbody>
       </table>
       {/* Evaluation Archive Section — OSAS only */}

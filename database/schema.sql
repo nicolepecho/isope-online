@@ -142,13 +142,13 @@ CREATE TABLE requirementcomments (
   id              uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   "orgUsername"   text NOT NULL,
   "requirementId" text,
-  "statusId"      text,
   "authorRole"    text,
   content         text,
   "createdAt"     timestamp without time zone DEFAULT now(),
   "authorEmail"   text,
   "authorName"    text,
-  deleted         boolean
+  deleted         boolean,
+  "statusId"      text
 );
 
 
