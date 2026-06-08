@@ -33,6 +33,7 @@ export default function OrgsMembers({ username }: { username: string }) {
   const sessionName = (session?.user as any)?.name
     ? ((session?.user as any)?.name || "").toString().trim().toLowerCase()
     : "";
+  const sessionEmail = (session?.user?.email || "").toString().trim().toLowerCase();
 
   const [evaluationId, setEvaluationId] = useState<string | null>(null);
   const [loadingEval, setLoadingEval] = useState(false);
@@ -310,8 +311,12 @@ export default function OrgsMembers({ username }: { username: string }) {
             )}
             {filteredMembers.map((member) => {
               const memberName = (member?.student_name || "").toString().trim().toLowerCase();
+              const memberEmail = (member?.email || "").toString().trim().toLowerCase();
+              // Primary: match by email. Fallback: match by name for rows without email.
               const canView =
-                isOSAS || (isMember && sessionName && memberName && sessionName === memberName);
+                isOSAS ||
+                (isMember && memberEmail && sessionEmail && memberEmail === sessionEmail) ||
+                (isMember && !memberEmail && memberName && sessionName && memberName === sessionName);
 
               return (
                 <tr key={member.id} className="border-b border-gray-200">

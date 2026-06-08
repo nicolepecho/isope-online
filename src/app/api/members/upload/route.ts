@@ -46,14 +46,17 @@ export async function POST(req: Request) {
 
   /**
    * Expected Excel headers (strings):
-   * student_name | organizations | school_year
+   * student_name | school_year | email
+   * email is optional but strongly recommended — used to link
+   * member records to user accounts without relying on name casing.
    */
   const members = rows.map((row: any) => ({
-    student_name: String(row.student_name).trim(),
+    student_name: String(row.student_name ?? '').trim(),
     organizations: orgname,
-    school_year: String(row.school_year).trim(),
+    school_year: String(row.school_year ?? '').trim(),
+    email: row.email ? String(row.email).trim().toLowerCase() : null,
   }));
-  // Filter out invalid rows
+  // Filter out invalid rows (name and school year are required)
   const validMembers = members.filter(
     (m) => m.student_name && m.school_year
   );
@@ -65,10 +68,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Fetch existing member names for this org to avoid duplicates
+  // Fetch existing members for this org to avoid duplicates
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from("member")
-    .select("student_name")
+    .select("student_name, email")
     .eq("organizations", orgname);
 
   if (fetchError) {
@@ -76,12 +79,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
+  const existingEmails = new Set(
+    (existing || [])
+      .filter((m: any) => m.email)
+      .map((m: any) => m.email.trim().toLowerCase())
+  );
   const existingNames = new Set(
-    (existing || []).map((m: { student_name: string }) => m.student_name.trim().toLowerCase())
+    (existing || []).map((m: any) => m.student_name.trim().toLowerCase())
   );
 
-  const newMembers = validMembers.filter(
-    (m) => !existingNames.has(m.student_name.toLowerCase())
+  // If the row has an email, deduplicate by email; otherwise fall back to name
+  const newMembers = validMembers.filter((m) =>
+    m.email
+      ? !existingEmails.has(m.email)
+      : !existingNames.has(m.student_name.toLowerCase())
   );
   const skipped = validMembers.length - newMembers.length;
 

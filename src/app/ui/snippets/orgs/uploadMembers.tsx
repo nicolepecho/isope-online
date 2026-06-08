@@ -44,7 +44,7 @@ export default function UploadMembersModal({
   }
   const downloadTemplate = () => {
     const worksheet = XLSX.utils.aoa_to_sheet([
-      ["student_name", "school_year"],
+      ["student_name", "school_year", "email"],
     ]);
 
     const workbook = XLSX.utils.book_new();

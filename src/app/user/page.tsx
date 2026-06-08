@@ -48,15 +48,25 @@ export default function UserPage() {
         return;
       }
 
-      // For members, use the existing logic
-      if (!session.user.name) return;
-      
-      const { data, error } = await supabase
+      // For members: try email match first, fall back to name for old rows
+      let data: any[] | null = null;
+
+      const { data: byEmail } = await supabase
         .from("member")
         .select("organizations")
-        .eq("student_name", session.user.name);
+        .eq("email", email);
 
-      if (error || !data) return;
+      if (byEmail && byEmail.length > 0) {
+        data = byEmail;
+      } else if (session.user.name) {
+        const { data: byName } = await supabase
+          .from("member")
+          .select("organizations")
+          .ilike("student_name", session.user.name);
+        data = byName;
+      }
+
+      if (!data) return;
 
       const orgList = data
         .map((row: any) => row.organizations)

@@ -25,13 +25,27 @@ export const fetchAccessibleOrgs = async ({
 
   fetchedOrgs = data || [];
 } else if (role === 'member') {
-  const { data: memberData } = await supabase
-    .from('member')
-    .select('*, orgs(*)')
-    .eq('student_name', name);
+  // Primary: match by email (reliable, case-insensitive)
+  if (email) {
+    const { data: byEmail } = await supabase
+      .from('member')
+      .select('*, orgs(*)')
+      .eq('email', email);
 
-    //extracts orgs from memberdata
-  fetchedOrgs = memberData?.map((m) => m.orgs) ?? [];
+    if (byEmail && byEmail.length > 0) {
+      fetchedOrgs = byEmail.map((m: any) => m.orgs).filter(Boolean) as Orgs[];
+    }
+  }
+
+  // Fallback: match by name for rows uploaded without an email
+  if (fetchedOrgs.length === 0 && name) {
+    const { data: byName } = await supabase
+      .from('member')
+      .select('*, orgs(*)')
+      .ilike('student_name', name);
+
+    fetchedOrgs = byName?.map((m: any) => m.orgs).filter(Boolean) as Orgs[] ?? [];
+  }
 } 
 else if (role === 'org') {
   // orgIdentifier should be the org's email
