@@ -348,6 +348,7 @@ const OrgsDashboard: FC = () => {
   const [role, setRole] = useState<string>('');
 
   const [notify, setNotify] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const showNotify = (type: 'success' | 'error', message: string) => {
     setNotify({ type, message });
@@ -475,7 +476,7 @@ const OrgsDashboard: FC = () => {
     };
 
     fetchOrgs();
-  }, [status, session]);
+  }, [status, session, refreshKey]);
 
   
 
@@ -529,7 +530,7 @@ const OrgsDashboard: FC = () => {
 
     setShowModal(false);
     showNotify('success', `Organization "${name}" created successfully.`);
-    router.refresh();
+    setRefreshKey(k => k + 1);
   };
 
   if (loading) return <div className="p-4 text-black">Loading organizations...</div>;
