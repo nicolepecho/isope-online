@@ -125,7 +125,23 @@ export default function OrgsRequirementArchive({ username }: { username: string 
 
         if (error) throw error;
 
-        setStatuses(data || []);
+        // Deduplicate by requirementId — keep the most relevant row
+        // (graded > submitted > unsubmitted) in case of duplicate archive cycles
+        const deduped = Object.values(
+          (data || []).reduce((acc: Record<string, OrgRequirementStatus>, status) => {
+            const existing = acc[status.requirementId];
+            if (!existing) {
+              acc[status.requirementId] = status;
+            } else if (status.graded && !existing.graded) {
+              acc[status.requirementId] = status;
+            } else if (status.submitted && !existing.submitted && !existing.graded) {
+              acc[status.requirementId] = status;
+            }
+            return acc;
+          }, {})
+        ) as OrgRequirementStatus[];
+
+        setStatuses(deduped);
       } catch (err) {
         console.error(err);
         setStatuses([]);
