@@ -29,13 +29,16 @@ const NotificationSidebar: FC = () => {
       const role = ((((session?.user as any)?.role) || '').toString().toLowerCase());
       setRole(role);
       const name = ((session?.user as any)?.name || '');
-      const orgIdentifier = ((session?.user as any)?.username || session?.user?.name || name);
-
+      const email = (session?.user?.email || '').toString().trim().toLowerCase();
+      const orgIdentifier = role === 'org'
+        ? email
+        : ((session?.user as any)?.username || session?.user?.name || name);
 
       const accessibleOrgs = await fetchAccessibleOrgs({
         role,
         name,
         orgIdentifier,
+        email,
       });
 
       if (role === 'member') {
