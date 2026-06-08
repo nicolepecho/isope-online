@@ -163,7 +163,7 @@ export function SubmissionInfo({
             <button
               onClick={handleSaveApproval}
               disabled={savingApproval}
-              className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] transition disabled:opacity-50"
+              className="bg-[#014fb3] text-white px-4 py-2 rounded hover:bg-[#013db3] transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               {savingApproval ? "Saving..." : "Save"}
             </button>
