@@ -217,7 +217,7 @@ const NotificationSidebar: FC = () => {
                             {items.map((req: any) => (
                               <div key={req.id} className="flex items-start cursor-pointer group">
                                 <Link
-                                  href={`/dashboard/orgs/${req.orgUsername}/requirements/${req.requirementId}`}
+                                  href={`/dashboard/orgs/${req.orgUsername}/requirements/${req.requirementId}?statusId=${req.id}`}
                                   className="text-sm leading-tight group-hover:text-blue-200 transition-colors"
                                 >
                                   {req.requirements?.title}
