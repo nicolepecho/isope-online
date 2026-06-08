@@ -31,7 +31,7 @@ const NotificationSidebar: FC = () => {
       const name = ((session?.user as any)?.name || '');
       const email = (session?.user?.email || '').toString().trim().toLowerCase();
       const orgIdentifier = role === 'org'
-        ? email
+        ? (session?.user?.email || '')
         : ((session?.user as any)?.username || session?.user?.name || name);
 
       const accessibleOrgs = await fetchAccessibleOrgs({
@@ -67,7 +67,7 @@ const NotificationSidebar: FC = () => {
       if (role === 'adviser') {
         query = query
           .eq('submitted', true)
-          .eq('approved', false)
+          .not('approved', 'is', true)   // matches approved = false AND approved = null
           .in('orgUsername', accessibleUsernames);
       } else if (role === 'osas') {
         query = query
@@ -75,8 +75,9 @@ const NotificationSidebar: FC = () => {
           .eq('graded', false)
           .eq('approved', true);
       } else {
+        // org role: show requirements not yet submitted
         query = query
-          .eq('submitted', false)
+          .not('submitted', 'is', true)  // matches submitted = false AND submitted = null
           .in('orgUsername', accessibleUsernames);
       }
 
