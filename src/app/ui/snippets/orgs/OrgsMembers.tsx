@@ -45,18 +45,18 @@ export default function OrgsMembers({ username }: { username: string }) {
   const [search, setSearch] = useState('');
   const [archivingEval, setArchivingEval] = useState(false);
 
+  const fetchMembers = async () => {
+    const { data, error } = await supabase
+      .from("member")
+      .select("*")
+      .eq("organizations", username);
+
+    if (error) console.error("Error fetching member:", error.message);
+    else setMembers(data);
+  };
+
   useEffect(() => {
-    const fetchmembers = async () => {
-      const { data, error } = await supabase
-        .from("member")
-        .select("*")
-        .eq("organizations", username);
-
-      if (error) console.error("Error fetching member:", error.message);
-      else setMembers(data);
-    };
-
-    fetchmembers();
+    fetchMembers();
   }, [username]);
 
   useEffect(() => {
@@ -410,7 +410,7 @@ export default function OrgsMembers({ username }: { username: string }) {
         )}
 
         {isOSAS && (
-          <UploadMembersModal orgname={username} />
+          <UploadMembersModal orgname={username} onUploadSuccess={fetchMembers} />
         )}
       </div>
     </div>

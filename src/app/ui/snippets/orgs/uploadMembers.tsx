@@ -3,7 +3,13 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 
-export default function UploadMembersModal({ orgname }: { orgname: string }) {
+export default function UploadMembersModal({
+  orgname,
+  onUploadSuccess,
+}: {
+  orgname: string;
+  onUploadSuccess?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,6 +39,7 @@ export default function UploadMembersModal({ orgname }: { orgname: string }) {
       const skippedText = data.skipped > 0 ? `, ${data.skipped} skipped (already exist)` : '';
       setMessage(`✅ ${data.count} members imported${skippedText}`);
       setFile(null);
+      onUploadSuccess?.();
     }
   }
   const downloadTemplate = () => {
