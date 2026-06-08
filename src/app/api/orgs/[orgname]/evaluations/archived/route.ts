@@ -34,7 +34,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgname:
   const archivedEval = archivedEvals?.[0] ?? null;
   if (!archivedEval) return NextResponse.json({ evaluation: null, members: [] });
 
-  // Fetch all members of this org
+  // Fetch all current members of this org
   const { data: members, error: memberErr } = await supabaseAdmin
     .from("member")
     .select("id, student_name")
@@ -56,6 +56,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ orgname:
     (responses || []).map((r: { memberId: string | null; submitted: boolean | null }) => [r.memberId, r.submitted])
   );
 
+  // Only show current members — deleted members are excluded from the archive view.
+  // Their response records are retained in the database but not displayed.
   const memberList = (members || []).map((m: { id: string; student_name: string | null }) => ({
     id: m.id,
     student_name: m.student_name,

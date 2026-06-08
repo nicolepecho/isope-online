@@ -347,6 +347,13 @@ const OrgsDashboard: FC = () => {
 
   const [role, setRole] = useState<string>('');
 
+  const [notify, setNotify] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showNotify = (type: 'success' | 'error', message: string) => {
+    setNotify({ type, message });
+    setTimeout(() => setNotify(null), 4000);
+  };
+
 
   const [stats, setStats] = useState({
   activeOrgs: 0,
@@ -474,9 +481,7 @@ const OrgsDashboard: FC = () => {
 
   const handleCreateOrg = async (name: string, email: string) => {
     if (!name.trim() || !email.trim()) {
-      alert(
-        'Failed to create organization. Organization not made due to existing or invalid input.'
-      );
+      showNotify('error', 'Organization name and email are required.');
       return;
     }
 
@@ -487,18 +492,20 @@ const OrgsDashboard: FC = () => {
 
     const { data: existingOrg } = await supabase
       .from('orgs')
-      .select('username')
+      .select('username, email')
       .or(`email.eq.${email},username.eq.${username}`)
       .maybeSingle();
 
     if (existingOrg) {
-      alert(
-        'Failed to create organization. Organization not made due to existing or invalid input.'
-      );
+      if (existingOrg.email === email) {
+        showNotify('error', 'An organization with that email already exists.');
+      } else {
+        showNotify('error', 'An organization with that name already exists.');
+      }
       return;
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('orgs')
       .insert([
         {
@@ -515,14 +522,13 @@ const OrgsDashboard: FC = () => {
       .single();
 
     if (error) {
-      alert(
-        'Failed to create organization. Organization not made due to existing or invalid input.'
-      );
       console.error('Error creating org:', error);
+      showNotify('error', 'Failed to create organization. Please try again.');
       return;
     }
 
     setShowModal(false);
+    showNotify('success', `Organization "${name}" created successfully.`);
     router.refresh();
   };
 
@@ -530,6 +536,20 @@ const OrgsDashboard: FC = () => {
   
   return (
     <div className=" min-h-screen p-6">
+
+      {/* Notification Banner */}
+      {notify && (
+        <div className={`mb-4 px-4 py-3 rounded border text-sm font-medium flex items-center justify-between
+          ${notify.type === 'success'
+            ? 'bg-green-50 border-green-200 text-green-700'
+            : 'bg-red-50 border-red-200 text-red-700'
+          }`}
+        >
+          <span>{notify.message}</span>
+          <button onClick={() => setNotify(null)} className="ml-4 font-bold cursor-pointer hover:opacity-70">×</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
